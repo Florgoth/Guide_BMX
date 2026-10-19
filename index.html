@@ -129,8 +129,9 @@ input[type=checkbox]{width:auto;margin-right:8px}
 </dialog>
 
 <script type="module">
+// Conseil : remplacez « esm.sh/@neondatabase/neon-js » par une version précise (ex. …/neon-js@X.Y.Z) une fois que tout fonctionne.
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
-
+// 1) Remplacez ces deux valeurs (console Neon > Auth > Configuration, et Data API)
 const NEON_AUTH_URL = 'https://ep-patient-haze-b4h5fzuq.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
 const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
 
@@ -165,8 +166,6 @@ function render() {
   const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
     list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
     <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
-  
-  // N'affiche le sélecteur de catégorie que si le coach est connecté
   $('#catSel').hidden = !me;
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
@@ -174,7 +173,6 @@ function render() {
   $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' || i === 0)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
   renderPlan();
   
-  // Utilise le nom du coach s'il existe, sinon la première partie du courriel
   const owner = id => {
     const coach = coaches.find(c => c.id === id);
     return coach ? (coach.name || coach.email.split('@')[0]) : 'un coach';
@@ -209,7 +207,7 @@ function openView(id) {
 function openForm(x) {
   editing = x || null; photos = [...(x?.photos || [])];
   $('#fTitle').textContent = x ? 'Modifier l’exercice' : 'Nouvel exercice';
-  $('#fName').value = x?.name \vert{}\vert{} ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
+  $('#fName').value = x?.name || ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
   $('#fGroup').innerHTML = groups.map(g => `<option value="${g.id}" ${g.id === x?.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
   drawPhotos(); $('#dForm').showModal();
 }
@@ -217,6 +215,7 @@ function drawPhotos() {
   $('#fPhotos').innerHTML = photos.map((u, i) => `<div><img src="${esc(u)}" alt=""><button data-rmphoto="${i}" aria-label="Retirer la photo">×</button></div>`).join('');
 }
 
+// Pas de stockage de fichiers ici : chaque photo est réduite (900 px, JPEG) et gardée dans la base
 function shrink(file, max = 900) {
   return new Promise((ok, ko) => {
     const img = new Image(), url = URL.createObjectURL(file);
@@ -235,7 +234,7 @@ async function saveExercise() {
   if (!name) { $('#fMsg').textContent = 'Le nom est obligatoire.'; return; }
   $('#fMsg').textContent = 'Envoi en cours…';
   for (const f of $('#fFiles').files) photos.push(await shrink(f));
-  const row = { name, group_id: $('#fGroup').value \vert{}\vert{} null, description: $('#fDesc').value, photos };
+  const row = { name, group_id: $('#fGroup').value || null, description: $('#fDesc').value, photos };
   const r = editing ? await db.from('exercises').update(row).eq('id', editing.id) : await db.from('exercises').insert(row);
   if (r.error) { $('#fMsg').textContent = 'Erreur : ' + r.error.message; return; }
   closeAll(); load();
@@ -284,10 +283,8 @@ function openCoaches(id) {
   const w = workouts.find(x => x.id === id), on = !!w;
   $('#cTitle').textContent = on ? 'Partager « ' + w.name + ' »' : 'Coachs inscrits';
   $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
-  
-  // Utilise le nom complet ou le début du courriel à la place du courriel complet
   $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || c.email.split('@')[0])}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
-  $('#cSave').dataset.id = id \vert{}\vert{} ''; $('#dCoaches').showModal();
+  $('#cSave').dataset.id = id || ''; $('#dCoaches').showModal();
 }
 $('#btnCoaches').onclick = () => openCoaches();
 $('#cSave').onclick = async () => {
@@ -305,7 +302,7 @@ async function auth(kind) {
 }
 $('#lIn').onclick = () => auth('in');
 $('#lUp').onclick = () => auth('up');
-
+// Met à jour la page et écoute les changements d'état d'authentification
 async function refreshSession(s) {
   if (s === undefined) s = (await db.auth.getSession()).data?.session;
   me = s?.user || null;
@@ -315,7 +312,6 @@ async function refreshSession(s) {
   await load();
 }
 
-// Rafraîchissement automatique à la connexion/déconnexion
 db.auth.onAuthStateChange((event, s) => {
   if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
     location.reload();

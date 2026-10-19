@@ -207,7 +207,7 @@ function openView(id) {
 function openForm(x) {
   editing = x || null; photos = [...(x?.photos || [])];
   $('#fTitle').textContent = x ? 'Modifier l\'exercice' : 'Nouvel exercice';
-  $('#fName').value = x?.name \vert{}\vert{} ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
+  $('#fName').value = x?.name || ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
   $('#fGroup').innerHTML = groups.map(g => `<option value="${g.id}" ${g.id === x?.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
   drawPhotos(); $('#dForm').showModal();
 }
@@ -233,7 +233,7 @@ async function saveExercise() {
   if (!name) { $('#fMsg').textContent = 'Le nom est obligatoire.'; return; }
   $('#fMsg').textContent = 'Envoi en cours...';
   for (const f of $('#fFiles').files) photos.push(await shrink(f));
-  const row = { name, group_id: $('#fGroup').value \vert{}\vert{} null, description: $('#fDesc').value, photos };
+  const row = { name, group_id: $('#fGroup').value || null, description: $('#fDesc').value, photos };
   const r = editing ? await db.from('exercises').update(row).eq('id', editing.id) : await db.from('exercises').insert(row);
   if (r.error) { $('#fMsg').textContent = 'Erreur : ' + r.error.message; return; }
   closeAll(); load();
@@ -284,7 +284,7 @@ function openCoaches(id) {
   $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
   
   $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || 'Coach sans nom')}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
-  $('#cSave').dataset.id = id \vert{}\vert{} ''; $('#dCoaches').showModal();
+  $('#cSave').dataset.id = id || ''; $('#dCoaches').showModal();
 }
 $('#btnCoaches').onclick = () => openCoaches();
 $('#cSave').onclick = async () => {

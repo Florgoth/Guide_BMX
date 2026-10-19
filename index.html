@@ -149,6 +149,7 @@ async function load() {
   ]);
   if (g.error) {
     console.error(g.error);
+    groups = []; exercises = []; workouts = []; $('#catSel').hidden = true; $('#saved').innerHTML = ''; $('#shared').innerHTML = ''; renderPlan();
     const needLogin = /authentication|bearer|JWT/i.test(g.error.message || '');
     $('#list').innerHTML = needLogin ? '<p class="empty">Connectez-vous pour voir les exercices.</p>'
       : '<p class="empty">Connexion à Neon impossible : ' + esc(g.error.message || JSON.stringify(g.error)) + '</p>';
@@ -165,6 +166,7 @@ function render() {
   const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
     list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
     <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
+  $('#catSel').hidden = false;
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
   const shown = groups.filter(g => cat === 'all' || g.id === cat);
@@ -287,19 +289,25 @@ $('#cSave').onclick = async () => {
   if (r.error) alert('Erreur : ' + r.error.message); else { closeAll(); load(); }
 };
 $('#btnLogin').onclick = () => $('#dLogin').showModal();
-$('#btnLogout').onclick = () => db.auth.signOut();
+$('#btnLogout').onclick = async () => { await db.auth.signOut(); location.reload(); };
 async function auth(kind) {
   const creds = { email: $('#lMail').value, password: $('#lPass').value };
   const r = kind === 'up' ? await db.auth.signUp({ ...creds, options: { data: { name: $('#lName').value.trim() } } }) : await db.auth.signInWithPassword(creds);
   $('#msg').textContent = r.error ? r.error.message : (kind === 'up' && !r.data.session ? 'Compte créé. Confirmez votre courriel, puis connectez-vous.' : '');
-  if (!r.error && r.data.session) closeAll();
+  if (!r.error && (r.data?.session || kind === 'in')) { closeAll(); location.reload(); }
 }
 $('#lIn').onclick = () => auth('in');
 $('#lUp').onclick = () => auth('up');
-db.auth.onAuthStateChange((_ev, s) => { me = s?.user || null; document.body.classList.toggle('authed', !!s); if (!s) wid = null; setTimeout(async () => {
-    if (me) await db.from('profiles').upsert({ id: me.id, name: me.user_metadata?.name || me.name || me.email.split('@')[0], email: me.email });
-    load();
-  }, 0); });
+// Met à jour la page selon l’état de connexion (appelé à chaque connexion, déconnexion ou changement)
+async function refreshSession(s) {
+  if (s === undefined) s = (await db.auth.getSession()).data?.session;
+  me = s?.user || null;
+  document.body.classList.toggle('authed', !!me);
+  if (!me) wid = null;
+  if (me) await db.from('profiles').upsert({ id: me.id, name: me.user_metadata?.name || me.name || me.email.split('@')[0], email: me.email });
+  await load();
+}
+db.auth.onAuthStateChange((_ev, s) => setTimeout(() => refreshSession(s), 0));
 
 load();
 </script>

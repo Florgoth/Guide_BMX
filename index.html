@@ -132,8 +132,8 @@ input[type=checkbox]{width:auto;margin-right:8px}
 // Conseil : remplacez « esm.sh/@neondatabase/neon-js » par une version précise (ex. …/neon-js@X.Y.Z) une fois que tout fonctionne.
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
 // 1) Remplacez ces deux valeurs (console Neon > Auth > Configuration, et Data API)
-const NEON_AUTH_URL = 'https://VOTRE-URL-NEON-AUTH';
-const NEON_DATA_API_URL = 'https://VOTRE-URL-DATA-API';
+const NEON_AUTH_URL = 'https://ep-patient-haze-b4h5fzuq.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
+const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
 
 const db = createClient({ auth: { adapter: SupabaseAuthAdapter(), url: NEON_AUTH_URL }, dataApi: { url: NEON_DATA_API_URL } });
 const $ = s => document.querySelector(s);

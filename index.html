@@ -147,7 +147,7 @@ async function load() {
     db.from('workouts').select().order('created_at', { ascending: false }),
     db.from('profiles').select().order('name')
   ]);
-  if (g.error) { $('#list').innerHTML = '<p class="empty">Connexion à Neon impossible. Vérifiez les deux URL dans index.html.</p>'; return; }
+  if (g.error) { console.error(g.error); $('#list').innerHTML = '<p class="empty">Connexion à Neon impossible : ' + esc(g.error.message || JSON.stringify(g.error)) + '</p>'; return; }
   groups = g.data; exercises = e.data || []; workouts = w.data || []; coaches = p.data || [];
   render();
 }

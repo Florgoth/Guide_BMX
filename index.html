@@ -1,16 +1,3 @@
-Le problème provient du fait que Neon Auth (qui est compatible avec l'API Supabase/GoTrue) enregistre les informations supplémentaires (comme le nom saisi lors du formulaire) dans les métadonnées de l'utilisateur (`user_metadata`), mais selon la façon dont le compte est créé ou reconnecté, la synchronisation avec la table `profiles` ne lisait pas la bonne clé de métadonnées, ou ne mettait pas à jour le profil existant lors d'une simple connexion (`signInWithPassword`).
-
-Voici les **3 corrections** apportées au code :
-
-1. **Extraction de `user_metadata` à la connexion** : Neon Auth place le nom envoyé lors du `signUp` dans `user.user_metadata.name` ou `user.raw_user_meta_data.name`. Lors de la fonction `refreshSession()`, nous vérifions ces deux emplacements pour garantir la récupération du nom exact saisi à l'inscription.
-2. **Mise à jour dynamique de `profiles**` : Si le nom dans la table `profiles` n'était pas renseigné ou utilisait l'adresse courriel, il est automatiquement corrigé lors de la session.
-3. **Affichage strict de `name**` : La fonction `owner` et la liste des coachs affichent en priorité le champ `name` du profil.
-
----
-
-### Code complet à copier-coller dans votre `index.html` :
-
-```html
 <!doctype html>
 <html lang="fr">
 <head>
@@ -354,5 +341,3 @@ load();
 </script>
 </body>
 </html>
-
-```

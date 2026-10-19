@@ -135,6 +135,13 @@ input[type=checkbox]{width:auto;margin-right:8px}
 
 <script type="module">
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
+// Liste des courriels des administrateurs
+const ADMIN_EMAILS = ['admin@bmxrivesud.com', 'mabeaulieu@bmxrivesud.com']; 
+
+// Fonction pour vérifier si l'utilisateur actuel est admin
+function isAdmin() {
+  return me && ADMIN_EMAILS.includes(me.email?.toLowerCase());
+}
 
 const NEON_AUTH_URL = 'https://ep-patient-haze-b4h5fzuq.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
 const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
@@ -174,7 +181,7 @@ function render() {
       <div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
       <button class="name" data-view="${x.id}">${esc(x.name)}</button>
       <button data-add="${x.id}">Ajouter</button>
-      ${me ? `<button class="danger edit-inline" data-delex="${x.id}" title="Supprimer cet exercice">&times;</button>` : ''}
+      ${isAdmin() ? `<button class="danger edit-inline" data-delex="${x.id}" title="Supprimer cet exercice">&times;</button>` : ''}
     </div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
   
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
@@ -211,6 +218,10 @@ function openView(id) {
   $('#vGroup').textContent = groups.find(g => g.id === x.group_id)?.name || 'Sans groupe';
   $('#vDesc').textContent = x.description || 'Pas de description.';
   $('#vPhotos').innerHTML = (x.photos || []).map(u => `<img src="${esc(u)}" alt="${esc(x.name)}">`).join('');
+  
+  // Affichage du bouton supprimer seulement si admin
+  $('#vDel').style.display = isAdmin() ? 'inline-block' : 'none';
+  
   $('#dView').showModal();
 }
 
@@ -259,6 +270,10 @@ document.addEventListener('click', async e => {
 
   // NOUVEAU : Suppression directe de l'exercice depuis la liste
   if (d('delex')) {
+    if (!isAdmin()) {
+      alert("Seul un administrateur peut supprimer des exercices.");
+      return;
+    }
     const exId = d('delex');
     const ex = exercises.find(x => x.id === exId);
     if (ex && confirm('Voulez-vous vraiment supprimer définitivement l\'exercice "' + ex.name + '" ?')) {

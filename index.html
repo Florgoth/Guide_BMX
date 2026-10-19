@@ -49,6 +49,10 @@ label{display:block;font-weight:600;margin:10px 0 4px}
 .photos div{position:relative}
 .photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block}
 .photos button{position:absolute;top:4px;right:4px;padding:0 7px}
+.ex .edit-inline {
+  padding: 2px 8px;
+  line-height: 1;
+}
 .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px}
 .desc{white-space:pre-wrap}
 .edit{display:none}.authed .edit{display:inline-block}.authed .anon{display:none}
@@ -163,9 +167,15 @@ function render() {
   const q = $('#search').value.trim().toLowerCase();
   const byGroup = id => exercises.filter(x => x.group_id === id && (!q || (x.name + x.description).toLowerCase().includes(q)));
   const none = exercises.filter(x => !groups.some(g => g.id === x.group_id) && (!q || x.name.toLowerCase().includes(q)));
+  
+  // Ajout du bouton "Supprimer" (.edit-inline) à côté de chaque exercice
   const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
-    list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
-    <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
+    list.map(x => `<div class="ex">
+      <div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
+      <button class="name" data-view="${x.id}">${esc(x.name)}</button>
+      <button data-add="${x.id}">Ajouter</button>
+      ${me ? `<button class="danger edit-inline" data-delex="${x.id}" title="Supprimer cet exercice">&times;</button>` : ''}
+    </div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
   
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
@@ -246,6 +256,18 @@ document.addEventListener('click', async e => {
   if (d('cat')) { cat = d('cat'); render(); }
   if (d('share')) openCoaches(d('share'));
   if (d('add')) addToPlan(d('add'));
+
+  // NOUVEAU : Suppression directe de l'exercice depuis la liste
+  if (d('delex')) {
+    const exId = d('delex');
+    const ex = exercises.find(x => x.id === exId);
+    if (ex && confirm('Voulez-vous vraiment supprimer définitivement l\'exercice "' + ex.name + '" ?')) {
+      await db.from('exercises').delete().eq('id', exId);
+      plan = plan.filter(p => p.id !== exId);
+      load();
+    }
+  }
+
   if (d('up') && +d('up') > 0) { const i = +d('up'); [plan[i - 1], plan[i]] = [plan[i], plan[i - 1]]; renderPlan(); }
   if (d('down') && +d('down') < plan.length - 1) { const i = +d('down'); [plan[i + 1], plan[i]] = [plan[i], plan[i + 1]]; renderPlan(); }
   if (d('rm')) { plan.splice(+d('rm'), 1); renderPlan(); }
@@ -253,6 +275,7 @@ document.addEventListener('click', async e => {
   if (d('load')) { const w = workouts.find(x => x.id === d('load')); plan = [...w.items]; wid = w.user_id === me?.id ? w.id : null; $('#planName').value = w.name; renderPlan(); }
   if (d('delw') && confirm('Supprimer cette seance ?')) { await db.from('workouts').delete().eq('id', d('delw')); load(); }
 });
+
 document.addEventListener('input', e => { if (e.target.dataset.detail !== undefined) plan[+e.target.dataset.detail].detail = e.target.value; });
 
 $('#search').oninput = render;

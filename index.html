@@ -172,7 +172,11 @@ function render() {
   const shown = groups.filter(g => cat === 'all' || g.id === cat);
   $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' || i === 0)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
   renderPlan();
-  const owner = id => coaches.find(c => c.id === id)?.name || 'un coach';
+  
+  const owner = id => {
+    const coach = coaches.find(c => c.id === id);
+    return coach ? (coach.name || coach.email.split('@')[0]) : 'un coach';
+  };
   const row = (w, mine) => `<div><button class="link" data-load="${w.id}">${esc(w.name)}</button>${mine ? `<span><button class="link" data-share="${w.id}">Partager</button><button class="link danger" data-delw="${w.id}">Supprimer</button></span>` : `<small class="empty">par ${esc(owner(w.user_id))}</small>`}</div>`;
   const mine = workouts.filter(w => w.user_id === me?.id), other = workouts.filter(w => w.user_id !== me?.id);
   $('#saved').innerHTML = !me ? '<p class="empty">Connectez-vous pour enregistrer vos séances.</p>' : mine.map(w => row(w, true)).join('') || '<p class="empty">Aucune séance enregistrée.</p>';
@@ -279,7 +283,7 @@ function openCoaches(id) {
   const w = workouts.find(x => x.id === id), on = !!w;
   $('#cTitle').textContent = on ? 'Partager « ' + w.name + ' »' : 'Coachs inscrits';
   $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
-  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || c.email)}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
+  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || c.email.split('@')[0])}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
   $('#cSave').dataset.id = id || ''; $('#dCoaches').showModal();
 }
 $('#btnCoaches').onclick = () => openCoaches();

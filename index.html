@@ -1,4 +1,14 @@
-Voici le code HTML complet et mis à jour. Vous pouvez remplacer **tout le contenu** de votre fichier `index.html` par ce bloc de code :
+Le problème provient du fait que Neon Auth (qui est compatible avec l'API Supabase/GoTrue) enregistre les informations supplémentaires (comme le nom saisi lors du formulaire) dans les métadonnées de l'utilisateur (`user_metadata`), mais selon la façon dont le compte est créé ou reconnecté, la synchronisation avec la table `profiles` ne lisait pas la bonne clé de métadonnées, ou ne mettait pas à jour le profil existant lors d'une simple connexion (`signInWithPassword`).
+
+Voici les **3 corrections** apportées au code :
+
+1. **Extraction de `user_metadata` à la connexion** : Neon Auth place le nom envoyé lors du `signUp` dans `user.user_metadata.name` ou `user.raw_user_meta_data.name`. Lors de la fonction `refreshSession()`, nous vérifions ces deux emplacements pour garantir la récupération du nom exact saisi à l'inscription.
+2. **Mise à jour dynamique de `profiles**` : Si le nom dans la table `profiles` n'était pas renseigné ou utilisait l'adresse courriel, il est automatiquement corrigé lors de la session.
+3. **Affichage strict de `name**` : La fonction `owner` et la liste des coachs affichent en priorité le champ `name` du profil.
+
+---
+
+### Code complet à copier-coller dans votre `index.html` :
 
 ```html
 <!doctype html>
@@ -169,7 +179,7 @@ function render() {
     list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
     <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
   
-  // N'affiche le sélecteur de catégorie que si le coach est connecté
+  // Masque la sélection de catégorie si déconnecté
   $('#catSel').hidden = !me;
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
@@ -177,10 +187,10 @@ function render() {
   $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' || i === 0)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
   renderPlan();
   
-  // Utilise le nom du coach s'il existe, sinon la première partie du courriel
+  // Utilise le nom d'affichage du coach
   const owner = id => {
     const coach = coaches.find(c => c.id === id);
-    return coach ? (coach.name || coach.email.split('@')[0]) : 'un coach';
+    return coach ? (coach.name || 'un coach') : 'un coach';
   };
   const row = (w, mine) => `<div><button class="link" data-load="${w.id}">${esc(w.name)}</button>${mine ? `<span><button class="link" data-share="${w.id}">Partager</button><button class="link danger" data-delw="${w.id}">Supprimer</button></span>` : `<small class="empty">par ${esc(owner(w.user_id))}</small>`}</div>`;
   const mine = workouts.filter(w => w.user_id === me?.id), other = workouts.filter(w => w.user_id !== me?.id);
@@ -288,8 +298,8 @@ function openCoaches(id) {
   $('#cTitle').textContent = on ? 'Partager « ' + w.name + ' »' : 'Coachs inscrits';
   $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
   
-  // Utilise le nom complet ou le début du courriel à la place du courriel complet
-  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || c.email.split('@')[0])}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
+  // Affiche exclusivement le nom d'inscription du coach
+  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || 'Coach sans nom')}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
   $('#cSave').dataset.id = id \vert{}\vert{} ''; $('#dCoaches').showModal();
 }
 $('#btnCoaches').onclick = () => openCoaches();
@@ -300,9 +310,15 @@ $('#cSave').onclick = async () => {
 };
 $('#btnLogin').onclick = () => $('#dLogin').showModal();
 $('#btnLogout').onclick = async () => { await db.auth.signOut(); location.reload(); };
+
 async function auth(kind) {
+  const nameInput = $('#lName').value.trim();
   const creds = { email: $('#lMail').value, password: $('#lPass').value };
-  const r = kind === 'up' ? await db.auth.signUp({ ...creds, options: { data: { name: $('#lName').value.trim() } } }) : await db.auth.signInWithPassword(creds);
+  
+  const r = kind === 'up' 
+    ? await db.auth.signUp({ ...creds, options: { data: { name: nameInput } } }) 
+    : await db.auth.signInWithPassword(creds);
+
   $('#msg').textContent = r.error ? r.error.message : (kind === 'up' && !r.data.session ? 'Compte créé. Confirmez votre courriel, puis connectez-vous.' : '');
   if (!r.error && (r.data?.session || kind === 'in')) { closeAll(); location.reload(); }
 }
@@ -314,11 +330,18 @@ async function refreshSession(s) {
   me = s?.user || null;
   document.body.classList.toggle('authed', !!me);
   if (!me) wid = null;
-  if (me) await db.from('profiles').upsert({ id: me.id, name: me.user_metadata?.name || me.name || me.email.split('@')[0], email: me.email });
+
+  if (me) {
+    // Récupère le nom saisi dans les métadonnées de l'utilisateur Neon/Supabase Auth
+    const registeredName = me.user_metadata?.name || me.raw_user_meta_data?.name;
+    if (registeredName) {
+      await db.from('profiles').upsert({ id: me.id, name: registeredName, email: me.email });
+    }
+  }
   await load();
 }
 
-// Rafraîchissement automatique à la connexion/déconnexion
+// Rafraîchissement automatique de la page lors d'une connexion ou déconnexion
 db.auth.onAuthStateChange((event, s) => {
   if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
     location.reload();

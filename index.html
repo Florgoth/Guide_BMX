@@ -365,17 +365,12 @@ async function refreshSession(s) {
 
   if (me) {
     const actualName = me.user_metadata?.name || me.raw_user_meta_data?.name || me.name;
-    const userRole = me.role || me.user_metadata?.role || me.raw_user_meta_data?.role || 'user';
-
     if (actualName) {
-      await db.from('profiles').upsert({ 
-        id: me.id, 
-        name: actualName, 
-        email: me.email,
-        role: userRole 
-      });
+      // Inscription ou mise à jour du profil dans Neon
+      await db.from('profiles').upsert({ id: me.id, name: actualName, email: me.email });
     }
   }
+  // Re-charge les données fraîches depuis Neon (dont la liste des profils mise à jour)
   await load();
 }
 

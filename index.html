@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guide d'entraînement BMX Rive-Sud</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#232428;--card:#2f3035;--ink:#f2f2f4;--dark:#17181b;--mute:#a9abb4;--line:#46474f;--gate:#ffd400;--pink:#d81b72;--orange:#ff7a1a;--err:#ff7b7b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
+h1,h2,h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;margin:0;line-height:1.1}
+header{background:var(--dark);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:6px solid;border-image:linear-gradient(90deg,var(--pink),var(--orange),var(--gate)) 1}
+header h1{font-size:1.6rem}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:2px solid var(--line);background:var(--card);padding:8px 14px;border-radius:6px;font-weight:600}
+button:hover{background:var(--orange);color:var(--dark);border-color:var(--orange)}
+button.main{background:var(--pink);border-color:var(--pink);color:#fff}
+button.main:hover{background:var(--orange);color:var(--dark);border-color:var(--orange)}
+button.link{border:0;background:none;padding:2px 6px;text-decoration:underline}
+button.danger{border-color:var(--err);color:var(--err)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+header button{background:none;color:#fff;border-color:#fff}
+header button:hover{color:var(--dark);background:var(--gate);border-color:var(--gate)}
+main{display:grid;gap:20px;padding:16px;max-width:1200px;margin:0 auto}
+@media(min-width:900px){main{grid-template-columns:3fr 2fr;align-items:start}#plan{position:sticky;top:12px}}
+section{background:var(--card);border:2px solid var(--line);border-radius:8px;padding:16px}
+.bar{display:flex;gap:8px;margin:12px 0}
+.bar input{flex:1;min-width:0}
+input,select,textarea{width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:6px;background:var(--bg)}
+details{border-top:2px solid var(--line);padding:10px 0}
+summary{color:var(--gate);cursor:pointer;font:800 1.3rem 'Barlow Condensed',sans-serif}
+summary small{font:400 .9rem Barlow;color:var(--mute);margin-left:6px}
+.ex{display:flex;gap:12px;align-items:center;padding:8px 0}
+.thumb{width:64px;height:64px;border-radius:6px;background:var(--bg) center/cover;border:2px solid var(--line);flex:none;display:grid;place-items:center;color:var(--mute);font-size:.7rem;text-align:center}
+.ex .name{flex:1;text-align:left;border:0;background:none;padding:0;font-weight:600;font-size:1.05rem}
+.ex .name:hover{text-decoration:underline;background:none}
+.empty{color:var(--mute);padding:8px 0}
+.item{border:2px solid var(--line);border-radius:6px;padding:8px;margin-bottom:8px}
+.item .row{display:flex;gap:4px;align-items:center;justify-content:space-between;margin-bottom:6px}
+.item .row b{flex:1}
+.item .row button{padding:2px 8px}
+.saved{margin-top:16px;border-top:2px solid var(--line);padding-top:12px}
+.saved div{display:flex;justify-content:space-between;gap:8px;padding:4px 0}
+dialog{background:var(--card);color:var(--ink);border:3px solid var(--pink);border-radius:10px;padding:18px;width:min(560px,94vw);max-height:92vh}
+dialog::backdrop{background:rgba(20,33,61,.55)}
+label{display:block;font-weight:600;margin:10px 0 4px}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:10px 0}
+.photos div{position:relative}
+.photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block}
+.photos button{position:absolute;top:4px;right:4px;padding:0 7px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px}
+.desc{white-space:pre-wrap}
+.edit{display:none}.authed .edit{display:inline-block}.authed .anon{display:none}
+#msg{color:var(--err);min-height:1.4em}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}.chips button{white-space:nowrap;padding:4px 12px;border-radius:99px}.chips button.on{background:var(--gate);border-color:var(--gate);color:var(--dark)}
+input[type=checkbox]{width:auto;margin-right:8px}
+@media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Guide d'entraînement BMX Rive-Sud</h1>
+  <div><button id="btnLogin" class="anon">Connexion coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
+</header>
+
+<main>
+  <section id="library">
+    <h2>Exercices</h2>
+    <div class="bar">
+      <input id="search" type="search" placeholder="Rechercher un exercice" aria-label="Rechercher un exercice">
+      <button id="btnNew" class="main edit">Nouvel exercice</button>
+    </div>
+    <div id="chips" class="chips"></div>
+    <div id="list"></div>
+    <button id="btnGroup" class="link edit">Ajouter un groupe</button>
+  </section>
+
+  <section id="plan">
+    <h2>Mon entraînement</h2>
+    <label for="planName">Nom de la séance</label>
+    <input id="planName" placeholder="Ex. : Mardi, manual et sauts">
+    <div id="planItems" style="margin-top:12px"></div>
+    <div class="actions">
+      <button id="btnClear">Vider</button>
+      <button id="btnPrint">Imprimer</button>
+      <button id="btnSave" class="main edit">Enregistrer</button>
+    </div>
+    <div class="saved"><h3>Mes séances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Partagées avec moi</h3><div id="shared" style="display:block"></div></div>
+  </section>
+</main>
+
+<dialog id="dView">
+  <h2 id="vName"></h2><p id="vGroup" class="empty"></p>
+  <p id="vDesc" class="desc"></p><div id="vPhotos" class="photos"></div>
+  <div class="actions">
+    <button id="vDel" class="danger edit">Supprimer</button>
+    <button id="vEdit" class="edit">Modifier</button>
+    <button id="vAdd" class="main">Ajouter à l’entraînement</button>
+    <button data-close>Fermer</button>
+  </div>
+</dialog>
+
+<dialog id="dForm">
+  <h2 id="fTitle">Exercice</h2>
+  <label for="fName">Nom</label><input id="fName">
+  <label for="fGroup">Groupe</label><select id="fGroup"></select>
+  <label for="fDesc">Description</label><textarea id="fDesc" rows="6" placeholder="But, mise en place, points à surveiller"></textarea>
+  <label for="fFiles">Photos</label><input id="fFiles" type="file" accept="image/*" multiple>
+  <div id="fPhotos" class="photos"></div>
+  <p id="fMsg" class="empty"></p>
+  <div class="actions"><button data-close>Annuler</button><button id="fSave" class="main">Enregistrer</button></div>
+</dialog>
+
+<dialog id="dCoaches">
+  <h2 id="cTitle"></h2>
+  <label><input id="cAll" type="checkbox">Tous les coachs inscrits</label>
+  <div id="coachList"></div>
+  <div class="actions"><button data-close>Fermer</button><button id="cSave" class="main">Partager</button></div>
+</dialog>
+
+<dialog id="dLogin">
+  <h2>Connexion coach</h2>
+  <label for="lName">Nom du coach (à l’inscription)</label><input id="lName" autocomplete="name">
+  <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
+  <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
+  <p id="msg"></p>
+  <div class="actions"><button data-close>Annuler</button><button id="lUp">Créer un compte</button><button id="lIn" class="main">Se connecter</button></div>
+</dialog>
+
+<script type="module">
+// Conseil : remplacez « esm.sh/@neondatabase/neon-js » par une version précise (ex. …/neon-js@X.Y.Z) une fois que tout fonctionne.
+import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
+// 1) Remplacez ces deux valeurs (console Neon > Auth > Configuration, et Data API)
+const NEON_AUTH_URL = 'https://ep-patient-haze-b4h5fzuq.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
+const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
+
+const db = createClient({ auth: { adapter: SupabaseAuthAdapter(), url: NEON_AUTH_URL }, dataApi: { url: NEON_DATA_API_URL } });
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let groups = [], exercises = [], workouts = [], plan = [], current = null, editing = null, photos = [], cat = 'all', coaches = [], me = null, wid = null;
+
+async function load() {
+  const [g, e, w, p] = await Promise.all([
+    db.from('groups').select().order('position'),
+    db.from('exercises').select().order('name'),
+    db.from('workouts').select().order('created_at', { ascending: false }),
+    db.from('profiles').select().order('name')
+  ]);
+  if (g.error) { $('#list').innerHTML = '<p class="empty">Connexion à Neon impossible. Vérifiez les deux URL dans index.html.</p>'; return; }
+  groups = g.data; exercises = e.data || []; workouts = w.data || []; coaches = p.data || [];
+  render();
+}
+
+function render() {
+  const q = $('#search').value.trim().toLowerCase();
+  const byGroup = id => exercises.filter(x => x.group_id === id && (!q || (x.name + x.description).toLowerCase().includes(q)));
+  const none = exercises.filter(x => !groups.some(g => g.id === x.group_id) && (!q || x.name.toLowerCase().includes(q)));
+  const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
+    list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
+    <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
+  $('#chips').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
+    .map(([id, n, c]) => `<button data-cat="${id}" class="${cat === id ? 'on' : ''}">${esc(n)} (${c})</button>`).join('');
+  const shown = groups.filter(g => cat === 'all' || g.id === cat);
+  $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' || i === 0)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
+  renderPlan();
+  const owner = id => coaches.find(c => c.id === id)?.name || 'un coach';
+  const row = (w, mine) => `<div><button class="link" data-load="${w.id}">${esc(w.name)}</button>${mine ? `<span><button class="link" data-share="${w.id}">Partager</button><button class="link danger" data-delw="${w.id}">Supprimer</button></span>` : `<small class="empty">par ${esc(owner(w.user_id))}</small>`}</div>`;
+  const mine = workouts.filter(w => w.user_id === me?.id), other = workouts.filter(w => w.user_id !== me?.id);
+  $('#saved').innerHTML = !me ? '<p class="empty">Connectez-vous pour enregistrer vos séances.</p>' : mine.map(w => row(w, true)).join('') || '<p class="empty">Aucune séance enregistrée.</p>';
+  $('#shared').innerHTML = other.map(w => row(w, false)).join('') || '<p class="empty">Rien n’est partagé avec vous pour l’instant.</p>';
+}
+
+function renderPlan() {
+  $('#planItems').innerHTML = plan.map((it, i) => {
+    const x = exercises.find(e => e.id === it.id); if (!x) return '';
+    return `<div class="item"><div class="row"><b>${i + 1}. ${esc(x.name)}</b>
+      <button data-up="${i}" aria-label="Monter">↑</button><button data-down="${i}" aria-label="Descendre">↓</button><button data-rm="${i}" aria-label="Retirer">×</button></div>
+      <input data-detail="${i}" value="${esc(it.detail)}" placeholder="Séries, répétitions, durée" aria-label="Détails"></div>`;
+  }).join('') || '<p class="empty">Ajoutez des exercices depuis la liste pour bâtir votre séance.</p>';
+}
+
+function addToPlan(id) { plan.push({ id, detail: '' }); renderPlan(); }
+function closeAll() { document.querySelectorAll('dialog').forEach(d => d.close()); }
+
+function openView(id) {
+  const x = exercises.find(e => e.id === id); current = x;
+  $('#vName').textContent = x.name;
+  $('#vGroup').textContent = groups.find(g => g.id === x.group_id)?.name || 'Sans groupe';
+  $('#vDesc').textContent = x.description || 'Pas de description.';
+  $('#vPhotos').innerHTML = (x.photos || []).map(u => `<img src="${esc(u)}" alt="${esc(x.name)}">`).join('');
+  $('#dView').showModal();
+}
+
+function openForm(x) {
+  editing = x || null; photos = [...(x?.photos || [])];
+  $('#fTitle').textContent = x ? 'Modifier l’exercice' : 'Nouvel exercice';
+  $('#fName').value = x?.name || ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
+  $('#fGroup').innerHTML = groups.map(g => `<option value="${g.id}" ${g.id === x?.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
+  drawPhotos(); $('#dForm').showModal();
+}
+function drawPhotos() {
+  $('#fPhotos').innerHTML = photos.map((u, i) => `<div><img src="${esc(u)}" alt=""><button data-rmphoto="${i}" aria-label="Retirer la photo">×</button></div>`).join('');
+}
+
+// Pas de stockage de fichiers ici : chaque photo est réduite (900 px, JPEG) et gardée dans la base
+function shrink(file, max = 900) {
+  return new Promise((ok, ko) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = img.width * k; c.height = img.height * k;
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.75));
+    };
+    img.onerror = ko; img.src = url;
+  });
+}
+
+async function saveExercise() {
+  const name = $('#fName').value.trim();
+  if (!name) { $('#fMsg').textContent = 'Le nom est obligatoire.'; return; }
+  $('#fMsg').textContent = 'Envoi en cours…';
+  for (const f of $('#fFiles').files) photos.push(await shrink(f));
+  const row = { name, group_id: $('#fGroup').value || null, description: $('#fDesc').value, photos };
+  const r = editing ? await db.from('exercises').update(row).eq('id', editing.id) : await db.from('exercises').insert(row);
+  if (r.error) { $('#fMsg').textContent = 'Erreur : ' + r.error.message; return; }
+  closeAll(); load();
+}
+
+document.addEventListener('click', async e => {
+  const t = e.target, d = k => t.dataset[k];
+  if (d('close') !== undefined) t.closest('dialog').close();
+  if (d('view')) openView(d('view'));
+  if (d('cat')) { cat = d('cat'); render(); }
+  if (d('share')) openCoaches(d('share'));
+  if (d('add')) addToPlan(d('add'));
+  if (d('up') && +d('up') > 0) { const i = +d('up'); [plan[i - 1], plan[i]] = [plan[i], plan[i - 1]]; renderPlan(); }
+  if (d('down') && +d('down') < plan.length - 1) { const i = +d('down'); [plan[i + 1], plan[i]] = [plan[i], plan[i + 1]]; renderPlan(); }
+  if (d('rm')) { plan.splice(+d('rm'), 1); renderPlan(); }
+  if (d('rmphoto')) { photos.splice(+d('rmphoto'), 1); drawPhotos(); }
+  if (d('load')) { const w = workouts.find(x => x.id === d('load')); plan = [...w.items]; wid = w.user_id === me?.id ? w.id : null; $('#planName').value = w.name; renderPlan(); }
+  if (d('delw') && confirm('Supprimer cette séance ?')) { await db.from('workouts').delete().eq('id', d('delw')); load(); }
+});
+document.addEventListener('input', e => { if (e.target.dataset.detail !== undefined) plan[+e.target.dataset.detail].detail = e.target.value; });
+
+$('#search').oninput = render;
+$('#btnNew').onclick = () => openForm();
+$('#fSave').onclick = saveExercise;
+$('#vAdd').onclick = () => { addToPlan(current.id); closeAll(); };
+$('#vEdit').onclick = () => { closeAll(); openForm(current); };
+$('#vDel').onclick = async () => {
+  if (!confirm('Supprimer « ' + current.name + ' » ?')) return;
+  await db.from('exercises').delete().eq('id', current.id);
+  plan = plan.filter(p => p.id !== current.id); closeAll(); load();
+};
+$('#btnGroup').onclick = async () => {
+  const name = prompt('Nom du nouveau groupe'); if (!name) return;
+  await db.from('groups').insert({ name, position: groups.length + 1 }); load();
+};
+$('#btnClear').onclick = () => { plan = []; wid = null; $('#planName').value = ''; renderPlan(); };
+$('#btnPrint').onclick = () => print();
+$('#btnSave').onclick = async () => {
+  const name = $('#planName').value.trim() || 'Séance sans nom';
+  const r = wid ? await db.from('workouts').update({ name, items: plan }).eq('id', wid).select() : await db.from('workouts').insert({ name, items: plan }).select();
+  if (r.error) alert('Erreur : ' + r.error.message); else { wid = r.data[0].id; load(); }
+};
+
+function openCoaches(id) {
+  const w = workouts.find(x => x.id === id), on = !!w;
+  $('#cTitle').textContent = on ? 'Partager « ' + w.name + ' »' : 'Coachs inscrits';
+  $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
+  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || c.email)}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
+  $('#cSave').dataset.id = id || ''; $('#dCoaches').showModal();
+}
+$('#btnCoaches').onclick = () => openCoaches();
+$('#cSave').onclick = async () => {
+  const ids = [...document.querySelectorAll('#coachList input:checked')].map(i => i.value);
+  const r = await db.from('workouts').update({ shared_all: $('#cAll').checked, shared_with: ids }).eq('id', $('#cSave').dataset.id);
+  if (r.error) alert('Erreur : ' + r.error.message); else { closeAll(); load(); }
+};
+$('#btnLogin').onclick = () => $('#dLogin').showModal();
+$('#btnLogout').onclick = () => db.auth.signOut();
+async function auth(kind) {
+  const creds = { email: $('#lMail').value, password: $('#lPass').value };
+  const r = kind === 'up' ? await db.auth.signUp({ ...creds, options: { data: { name: $('#lName').value.trim() } } }) : await db.auth.signInWithPassword(creds);
+  $('#msg').textContent = r.error ? r.error.message : (kind === 'up' && !r.data.session ? 'Compte créé. Confirmez votre courriel, puis connectez-vous.' : '');
+  if (!r.error && r.data.session) closeAll();
+}
+$('#lIn').onclick = () => auth('in');
+$('#lUp').onclick = () => auth('up');
+db.auth.onAuthStateChange((_ev, s) => { me = s?.user || null; document.body.classList.toggle('authed', !!s); if (!s) wid = null; setTimeout(async () => {
+    if (me) await db.from('profiles').upsert({ id: me.id, name: me.user_metadata?.name || me.name || me.email.split('@')[0], email: me.email });
+    load();
+  }, 0); });
+
+load();
+</script>
+</body>
+</html>

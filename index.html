@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Guide des coachs BMX Rive-Sud</title>
+<title>Carnet de coach BMX Rive-Sud</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#232428;--card:#2f3035;--ink:#f2f2f4;--dark:#17181b;--mute:#a9abb4;--line:#46474f;--gate:#ffd400;--pink:#d81b72;--orange:#ff7a1a;--err:#ff7b7b}
@@ -60,7 +60,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 </head>
 <body>
 <header>
-  <h1>Guide des coachs BMX Rive-Sud</h1>
+  <h1>Carnet de coach BMX Rive-Sud</h1>
   <div><button id="btnLogin" class="anon">Connexion coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
 </header>
 
@@ -71,14 +71,14 @@ input[type=checkbox]{width:auto;margin-right:8px}
       <input id="search" type="search" placeholder="Rechercher un exercice" aria-label="Rechercher un exercice">
       <button id="btnNew" class="main edit">Nouvel exercice</button>
     </div>
-    <select id="catSel" aria-label="Catégorie d’exercices" style="margin-bottom:10px"></select>
+    <select id="catSel" aria-label="Categorie d'exercices" style="margin-bottom:10px"></select>
     <div id="list"></div>
     <button id="btnGroup" class="link edit">Ajouter un groupe</button>
   </section>
 
   <section id="plan">
-    <h2>Mon entraînement</h2>
-    <label for="planName">Nom de la séance</label>
+    <h2>Mon entrainement</h2>
+    <label for="planName">Nom de la seance</label>
     <input id="planName" placeholder="Ex. : Mardi, manual et sauts">
     <div id="planItems" style="margin-top:12px"></div>
     <div class="actions">
@@ -86,7 +86,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
       <button id="btnPrint">Imprimer</button>
       <button id="btnSave" class="main edit">Enregistrer</button>
     </div>
-    <div class="saved"><h3>Mes séances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Partagées avec moi</h3><div id="shared" style="display:block"></div></div>
+    <div class="saved"><h3>Mes seances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Partagees avec moi</h3><div id="shared" style="display:block"></div></div>
   </section>
 </main>
 
@@ -96,7 +96,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
   <div class="actions">
     <button id="vDel" class="danger edit">Supprimer</button>
     <button id="vEdit" class="edit">Modifier</button>
-    <button id="vAdd" class="main">Ajouter à l’entraînement</button>
+    <button id="vAdd" class="main">Ajouter a l'entrainement</button>
     <button data-close>Fermer</button>
   </div>
 </dialog>
@@ -105,7 +105,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
   <h2 id="fTitle">Exercice</h2>
   <label for="fName">Nom</label><input id="fName">
   <label for="fGroup">Groupe</label><select id="fGroup"></select>
-  <label for="fDesc">Description</label><textarea id="fDesc" rows="6" placeholder="But, mise en place, points à surveiller"></textarea>
+  <label for="fDesc">Description</label><textarea id="fDesc" rows="6" placeholder="But, mise en place, points a surveiller"></textarea>
   <label for="fFiles">Photos</label><input id="fFiles" type="file" accept="image/*" multiple>
   <div id="fPhotos" class="photos"></div>
   <p id="fMsg" class="empty"></p>
@@ -121,17 +121,16 @@ input[type=checkbox]{width:auto;margin-right:8px}
 
 <dialog id="dLogin">
   <h2>Connexion coach</h2>
-  <label for="lName">Nom du coach (à l’inscription)</label><input id="lName" autocomplete="name">
+  <label for="lName">Nom du coach (a l'inscription)</label><input id="lName" autocomplete="name">
   <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
   <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
   <p id="msg"></p>
-  <div class="actions"><button data-close>Annuler</button><button id="lUp">Créer un compte</button><button id="lIn" class="main">Se connecter</button></div>
+  <div class="actions"><button data-close>Annuler</button><button id="lUp">Creer un compte</button><button id="lIn" class="main">Se connecter</button></div>
 </dialog>
 
 <script type="module">
-// Conseil : remplacez « esm.sh/@neondatabase/neon-js » par une version précise (ex. …/neon-js@X.Y.Z) une fois que tout fonctionne.
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
-// 1) Remplacez ces deux valeurs (console Neon > Auth > Configuration, et Data API)
+
 const NEON_AUTH_URL = 'https://ep-patient-haze-b4h5fzuq.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
 const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
 
@@ -152,7 +151,7 @@ async function load() {
     groups = []; exercises = []; workouts = []; $('#catSel').hidden = true; $('#saved').innerHTML = ''; $('#shared').innerHTML = ''; renderPlan();
     const needLogin = /authentication|bearer|JWT/i.test(g.error.message || '');
     $('#list').innerHTML = needLogin ? '<p class="empty">Connectez-vous pour voir les exercices.</p>'
-      : '<p class="empty">Connexion à Neon impossible : ' + esc(g.error.message || JSON.stringify(g.error)) + '</p>';
+      : '<p class="empty">Connexion a Neon impossible : ' + esc(g.error.message || JSON.stringify(g.error)) + '</p>';
     return;
   }
   groups = g.data; exercises = e.data || []; workouts = w.data || []; coaches = p.data || [];
@@ -166,6 +165,7 @@ function render() {
   const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
     list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
     <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
+  
   $('#catSel').hidden = !me;
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
@@ -175,21 +175,21 @@ function render() {
   
   const owner = id => {
     const coach = coaches.find(c => c.id === id);
-    return coach ? (coach.name || coach.email.split('@')[0]) : 'un coach';
+    return coach ? (coach.name || 'un coach') : 'un coach';
   };
   const row = (w, mine) => `<div><button class="link" data-load="${w.id}">${esc(w.name)}</button>${mine ? `<span><button class="link" data-share="${w.id}">Partager</button><button class="link danger" data-delw="${w.id}">Supprimer</button></span>` : `<small class="empty">par ${esc(owner(w.user_id))}</small>`}</div>`;
   const mine = workouts.filter(w => w.user_id === me?.id), other = workouts.filter(w => w.user_id !== me?.id);
-  $('#saved').innerHTML = !me ? '<p class="empty">Connectez-vous pour enregistrer vos séances.</p>' : mine.map(w => row(w, true)).join('') || '<p class="empty">Aucune séance enregistrée.</p>';
-  $('#shared').innerHTML = other.map(w => row(w, false)).join('') || '<p class="empty">Rien n’est partagé avec vous pour l’instant.</p>';
+  $('#saved').innerHTML = !me ? '<p class="empty">Connectez-vous pour enregistrer vos seances.</p>' : mine.map(w => row(w, true)).join('') || '<p class="empty">Aucune seance enregistree.</p>';
+  $('#shared').innerHTML = other.map(w => row(w, false)).join('') || '<p class="empty">Rien n\'est partage avec vous pour l\'instant.</p>';
 }
 
 function renderPlan() {
   $('#planItems').innerHTML = plan.map((it, i) => {
     const x = exercises.find(e => e.id === it.id); if (!x) return '';
     return `<div class="item"><div class="row"><b>${i + 1}. ${esc(x.name)}</b>
-      <button data-up="${i}" aria-label="Monter">↑</button><button data-down="${i}" aria-label="Descendre">↓</button><button data-rm="${i}" aria-label="Retirer">×</button></div>
-      <input data-detail="${i}" value="${esc(it.detail)}" placeholder="Séries, répétitions, durée" aria-label="Détails"></div>`;
-  }).join('') || '<p class="empty">Ajoutez des exercices depuis la liste pour bâtir votre séance.</p>';
+      <button data-up="${i}" aria-label="Monter">&uarr;</button><button data-down="${i}" aria-label="Descendre">&darr;</button><button data-rm="${i}" aria-label="Retirer">&times;</button></div>
+      <input data-detail="${i}" value="${esc(it.detail)}" placeholder="Series, repetitions, duree" aria-label="Details"></div>`;
+  }).join('') || '<p class="empty">Ajoutez des exercices depuis la liste pour batir votre seance.</p>';
 }
 
 function addToPlan(id) { plan.push({ id, detail: '' }); renderPlan(); }
@@ -206,16 +206,15 @@ function openView(id) {
 
 function openForm(x) {
   editing = x || null; photos = [...(x?.photos || [])];
-  $('#fTitle').textContent = x ? 'Modifier l’exercice' : 'Nouvel exercice';
-  $('#fName').value = x?.name || ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
+  $('#fTitle').textContent = x ? 'Modifier l\'exercice' : 'Nouvel exercice';
+  $('#fName').value = x?.name \vert{}\vert{} ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
   $('#fGroup').innerHTML = groups.map(g => `<option value="${g.id}" ${g.id === x?.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
   drawPhotos(); $('#dForm').showModal();
 }
 function drawPhotos() {
-  $('#fPhotos').innerHTML = photos.map((u, i) => `<div><img src="${esc(u)}" alt=""><button data-rmphoto="${i}" aria-label="Retirer la photo">×</button></div>`).join('');
+  $('#fPhotos').innerHTML = photos.map((u, i) => `<div><img src="${esc(u)}" alt=""><button data-rmphoto="${i}" aria-label="Retirer la photo">&times;</button></div>`).join('');
 }
 
-// Pas de stockage de fichiers ici : chaque photo est réduite (900 px, JPEG) et gardée dans la base
 function shrink(file, max = 900) {
   return new Promise((ok, ko) => {
     const img = new Image(), url = URL.createObjectURL(file);
@@ -232,9 +231,9 @@ function shrink(file, max = 900) {
 async function saveExercise() {
   const name = $('#fName').value.trim();
   if (!name) { $('#fMsg').textContent = 'Le nom est obligatoire.'; return; }
-  $('#fMsg').textContent = 'Envoi en cours…';
+  $('#fMsg').textContent = 'Envoi en cours...';
   for (const f of $('#fFiles').files) photos.push(await shrink(f));
-  const row = { name, group_id: $('#fGroup').value || null, description: $('#fDesc').value, photos };
+  const row = { name, group_id: $('#fGroup').value \vert{}\vert{} null, description: $('#fDesc').value, photos };
   const r = editing ? await db.from('exercises').update(row).eq('id', editing.id) : await db.from('exercises').insert(row);
   if (r.error) { $('#fMsg').textContent = 'Erreur : ' + r.error.message; return; }
   closeAll(); load();
@@ -252,7 +251,7 @@ document.addEventListener('click', async e => {
   if (d('rm')) { plan.splice(+d('rm'), 1); renderPlan(); }
   if (d('rmphoto')) { photos.splice(+d('rmphoto'), 1); drawPhotos(); }
   if (d('load')) { const w = workouts.find(x => x.id === d('load')); plan = [...w.items]; wid = w.user_id === me?.id ? w.id : null; $('#planName').value = w.name; renderPlan(); }
-  if (d('delw') && confirm('Supprimer cette séance ?')) { await db.from('workouts').delete().eq('id', d('delw')); load(); }
+  if (d('delw') && confirm('Supprimer cette seance ?')) { await db.from('workouts').delete().eq('id', d('delw')); load(); }
 });
 document.addEventListener('input', e => { if (e.target.dataset.detail !== undefined) plan[+e.target.dataset.detail].detail = e.target.value; });
 
@@ -263,7 +262,7 @@ $('#fSave').onclick = saveExercise;
 $('#vAdd').onclick = () => { addToPlan(current.id); closeAll(); };
 $('#vEdit').onclick = () => { closeAll(); openForm(current); };
 $('#vDel').onclick = async () => {
-  if (!confirm('Supprimer « ' + current.name + ' » ?')) return;
+  if (!confirm('Supprimer "' + current.name + '" ?')) return;
   await db.from('exercises').delete().eq('id', current.id);
   plan = plan.filter(p => p.id !== current.id); closeAll(); load();
 };
@@ -274,17 +273,18 @@ $('#btnGroup').onclick = async () => {
 $('#btnClear').onclick = () => { plan = []; wid = null; $('#planName').value = ''; renderPlan(); };
 $('#btnPrint').onclick = () => print();
 $('#btnSave').onclick = async () => {
-  const name = $('#planName').value.trim() || 'Séance sans nom';
+  const name = $('#planName').value.trim() || 'Seance sans nom';
   const r = wid ? await db.from('workouts').update({ name, items: plan }).eq('id', wid).select() : await db.from('workouts').insert({ name, items: plan }).select();
   if (r.error) alert('Erreur : ' + r.error.message); else { wid = r.data[0].id; load(); }
 };
 
 function openCoaches(id) {
   const w = workouts.find(x => x.id === id), on = !!w;
-  $('#cTitle').textContent = on ? 'Partager « ' + w.name + ' »' : 'Coachs inscrits';
+  $('#cTitle').textContent = on ? 'Partager "' + w.name + '"' : 'Coachs inscrits';
   $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
-  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || c.email.split('@')[0])}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
-  $('#cSave').dataset.id = id || ''; $('#dCoaches').showModal();
+  
+  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || 'Coach sans nom')}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
+  $('#cSave').dataset.id = id \vert{}\vert{} ''; $('#dCoaches').showModal();
 }
 $('#btnCoaches').onclick = () => openCoaches();
 $('#cSave').onclick = async () => {
@@ -294,21 +294,37 @@ $('#cSave').onclick = async () => {
 };
 $('#btnLogin').onclick = () => $('#dLogin').showModal();
 $('#btnLogout').onclick = async () => { await db.auth.signOut(); location.reload(); };
+
 async function auth(kind) {
+  const nameInput = $('#lName').value.trim();
   const creds = { email: $('#lMail').value, password: $('#lPass').value };
-  const r = kind === 'up' ? await db.auth.signUp({ ...creds, options: { data: { name: $('#lName').value.trim() } } }) : await db.auth.signInWithPassword(creds);
-  $('#msg').textContent = r.error ? r.error.message : (kind === 'up' && !r.data.session ? 'Compte créé. Confirmez votre courriel, puis connectez-vous.' : '');
+  
+  // Transmet 'name' a la fois dans options.data et au premier niveau pour Better Auth
+  const r = kind === 'up' 
+    ? await db.auth.signUp({ ...creds, name: nameInput, options: { data: { name: nameInput } } }) 
+    : await db.auth.signInWithPassword(creds);
+
+  $('#msg').textContent = r.error ? r.error.message : (kind === 'up' && !r.data.session ? 'Compte cree. Confirmez votre courriel, puis connectez-vous.' : '');
   if (!r.error && (r.data?.session || kind === 'in')) { closeAll(); location.reload(); }
 }
 $('#lIn').onclick = () => auth('in');
 $('#lUp').onclick = () => auth('up');
-// Met à jour la page et écoute les changements d'état d'authentification
+
 async function refreshSession(s) {
   if (s === undefined) s = (await db.auth.getSession()).data?.session;
   me = s?.user || null;
   document.body.classList.toggle('authed', !!me);
   if (!me) wid = null;
-  if (me) await db.from('profiles').upsert({ id: me.id, name: me.user_metadata?.name || me.name || me.email.split('@')[0], email: me.email });
+
+  if (me) {
+    // Neon / Better Auth extrait le nom a la racine de l'objet utilisateur
+    const actualName = me.name || me.user_metadata?.name || me.raw_user_meta_data?.name;
+    if (actualName) {
+      // Met a jour explicitement le nom dans la table profiles
+      await db.from('profiles').upsert({ id: me.id, name: actualName, email: me.email });
+      await db.from('profiles').update({ name: actualName }).eq('id', me.id);
+    }
+  }
   await load();
 }
 

@@ -136,11 +136,14 @@ input[type=checkbox]{width:auto;margin-right:8px}
 <script type="module">
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
 // Liste des courriels des administrateurs
-const ADMIN_EMAILS = ['admin@bmxrivesud.com', 'mabeaulieu@bmxrivesud.com']; 
+const ADMIN_EMAILS = ['mephisto_77@hotmail.com', 'mabeaulieu@bmxrivesud.com']; 
 
-// Fonction pour vérifier si l'utilisateur actuel est admin
+// Détection automatique du rôle admin via Better Auth / Neon Auth
 function isAdmin() {
-  return me && ADMIN_EMAILS.includes(me.email?.toLowerCase());
+  if (!me) return false;
+  // Vérifie si le rôle admin est présent dans la liste des profils chargés
+  const myProfile = coaches.find(c => c.id === me.id);
+  return myProfile?.role === 'admin' || me.user_metadata?.role === 'admin';
 }
 
 const NEON_AUTH_URL = 'https://ep-patient-haze-b4h5fzuq.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
@@ -362,8 +365,15 @@ async function refreshSession(s) {
 
   if (me) {
     const actualName = me.user_metadata?.name || me.raw_user_meta_data?.name || me.name;
+    const userRole = me.role || me.user_metadata?.role || me.raw_user_meta_data?.role || 'user';
+
     if (actualName) {
-      await db.from('profiles').upsert({ id: me.id, name: actualName, email: me.email });
+      await db.from('profiles').upsert({ 
+        id: me.id, 
+        name: actualName, 
+        email: me.email,
+        role: userRole 
+      });
     }
   }
   await load();

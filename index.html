@@ -364,13 +364,27 @@ async function refreshSession(s) {
   if (!me) wid = null;
 
   if (me) {
-    const actualName = me.user_metadata?.name || me.raw_user_meta_data?.name || me.name;
-    if (actualName) {
-      // Inscription ou mise à jour du profil dans Neon
-      await db.from('profiles').upsert({ id: me.id, name: actualName, email: me.email });
+    // Récupération du nom d'affichage à l'inscription
+    const actualName = me.user_metadata?.name || me.raw_user_meta_data?.name || me.name || me.email.split('@')[0];
+    
+    // Tentative d'insertion/mise à jour dans profiles
+    const { error } = await db.from('profiles').upsert({
+      id: me.id,
+      name: actualName,
+      email: me.email
+    }, { onConflict: 'id' });
+
+    if (error) {
+      console.warn("Erreur upsert profile, tentative d'insertion brute :", error.message);
+      await db.from('profiles').insert({
+        id: me.id,
+        name: actualName,
+        email: me.email
+      });
     }
   }
-  // Re-charge les données fraîches depuis Neon (dont la liste des profils mise à jour)
+  
+  // Rechargement des données fraîches depuis Neon
   await load();
 }
 

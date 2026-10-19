@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Guide d'entraînement BMX Rive-Sud</title>
+<title>Carnet de coach BMX Rive-Sud</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#232428;--card:#2f3035;--ink:#f2f2f4;--dark:#17181b;--mute:#a9abb4;--line:#46474f;--gate:#ffd400;--pink:#d81b72;--orange:#ff7a1a;--err:#ff7b7b}
@@ -24,7 +24,7 @@ header button{background:none;color:#fff;border-color:#fff}
 header button:hover{color:var(--dark);background:var(--gate);border-color:var(--gate)}
 main{display:grid;gap:20px;padding:16px;max-width:1200px;margin:0 auto}
 @media(min-width:900px){main{grid-template-columns:3fr 2fr;align-items:start}#plan{position:sticky;top:12px}}
-section{background:var(--card);border:2px solid var(--line);border-radius:8px;padding:16px}
+section{min-width:0;background:var(--card);border:2px solid var(--line);border-radius:8px;padding:16px}
 .bar{display:flex;gap:8px;margin:12px 0}
 .bar input{flex:1;min-width:0}
 input,select,textarea{width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:6px;background:var(--bg)}
@@ -60,7 +60,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 </head>
 <body>
 <header>
-  <h1>Guide d'entraînement BMX Rive-Sud</h1>
+  <h1>Carnet de coach BMX Rive-Sud</h1>
   <div><button id="btnLogin" class="anon">Connexion coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
 </header>
 
@@ -71,7 +71,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
       <input id="search" type="search" placeholder="Rechercher un exercice" aria-label="Rechercher un exercice">
       <button id="btnNew" class="main edit">Nouvel exercice</button>
     </div>
-    <div id="chips" class="chips"></div>
+    <select id="catSel" aria-label="Catégorie d’exercices" style="margin-bottom:10px"></select>
     <div id="list"></div>
     <button id="btnGroup" class="link edit">Ajouter un groupe</button>
   </section>
@@ -132,8 +132,8 @@ input[type=checkbox]{width:auto;margin-right:8px}
 // Conseil : remplacez « esm.sh/@neondatabase/neon-js » par une version précise (ex. …/neon-js@X.Y.Z) une fois que tout fonctionne.
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
 // 1) Remplacez ces deux valeurs (console Neon > Auth > Configuration, et Data API)
-const NEON_AUTH_URL = 'https://ep-patient-haze-b4h5fzuq.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
-const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
+const NEON_AUTH_URL = 'https://VOTRE-URL-NEON-AUTH';
+const NEON_DATA_API_URL = 'https://VOTRE-URL-DATA-API';
 
 const db = createClient({ auth: { adapter: SupabaseAuthAdapter(), url: NEON_AUTH_URL }, dataApi: { url: NEON_DATA_API_URL } });
 const $ = s => document.querySelector(s);
@@ -147,7 +147,13 @@ async function load() {
     db.from('workouts').select().order('created_at', { ascending: false }),
     db.from('profiles').select().order('name')
   ]);
-  if (g.error) { console.error(g.error); $('#list').innerHTML = '<p class="empty">Connexion à Neon impossible : ' + esc(g.error.message || JSON.stringify(g.error)) + '</p>'; return; }
+  if (g.error) {
+    console.error(g.error);
+    const needLogin = /authentication|bearer|JWT/i.test(g.error.message || '');
+    $('#list').innerHTML = needLogin ? '<p class="empty">Connectez-vous pour voir les exercices.</p>'
+      : '<p class="empty">Connexion à Neon impossible : ' + esc(g.error.message || JSON.stringify(g.error)) + '</p>';
+    return;
+  }
   groups = g.data; exercises = e.data || []; workouts = w.data || []; coaches = p.data || [];
   render();
 }
@@ -159,8 +165,8 @@ function render() {
   const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
     list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
     <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
-  $('#chips').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
-    .map(([id, n, c]) => `<button data-cat="${id}" class="${cat === id ? 'on' : ''}">${esc(n)} (${c})</button>`).join('');
+  $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
+    .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
   const shown = groups.filter(g => cat === 'all' || g.id === cat);
   $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' || i === 0)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
   renderPlan();
@@ -245,6 +251,7 @@ document.addEventListener('click', async e => {
 document.addEventListener('input', e => { if (e.target.dataset.detail !== undefined) plan[+e.target.dataset.detail].detail = e.target.value; });
 
 $('#search').oninput = render;
+$('#catSel').onchange = e => { cat = e.target.value; render(); };
 $('#btnNew').onclick = () => openForm();
 $('#fSave').onclick = saveExercise;
 $('#vAdd').onclick = () => { addToPlan(current.id); closeAll(); };

@@ -166,7 +166,7 @@ function render() {
   const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
     list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
     <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
-  $('#catSel').hidden = false;
+  $('#catSel').hidden = !me;
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
   const shown = groups.filter(g => cat === 'all' || g.id === cat);
@@ -298,7 +298,7 @@ async function auth(kind) {
 }
 $('#lIn').onclick = () => auth('in');
 $('#lUp').onclick = () => auth('up');
-// Met à jour la page selon l’état de connexion (appelé à chaque connexion, déconnexion ou changement)
+// Met à jour la page et écoute les changements d'état d'authentification
 async function refreshSession(s) {
   if (s === undefined) s = (await db.auth.getSession()).data?.session;
   me = s?.user || null;
@@ -307,7 +307,14 @@ async function refreshSession(s) {
   if (me) await db.from('profiles').upsert({ id: me.id, name: me.user_metadata?.name || me.name || me.email.split('@')[0], email: me.email });
   await load();
 }
-db.auth.onAuthStateChange((_ev, s) => setTimeout(() => refreshSession(s), 0));
+
+db.auth.onAuthStateChange((event, s) => {
+  if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+    location.reload();
+  } else {
+    setTimeout(() => refreshSession(s), 0);
+  }
+});
 
 load();
 </script>

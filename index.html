@@ -182,7 +182,7 @@ function render() {
   const q = $('#search').value.trim().toLowerCase();
   const byGroup = id => exercises.filter(x => x.group_id === id && (!q || (x.name + x.description).toLowerCase().includes(q)));
   const none = exercises.filter(x => !groups.some(g => g.id === x.group_id) && (!q || x.name.toLowerCase().includes(q)));
-  const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
+  const block = (name, list, open) => `<details ${open || (q && list.length) ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
     list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
     <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
   

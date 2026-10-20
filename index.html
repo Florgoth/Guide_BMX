@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Guide de coach BMX Rive-Sud</title>
+<title>Carnet de coach BMX Rive-Sud</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -63,7 +63,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 </head>
 <body>
 <header>
-  <h1>Guide d'exercices BMX Rive-Sud</h1>
+  <h1>Carnet de coach BMX Rive-Sud</h1>
   <div><button id="btnLogin" class="anon">Connexion coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
 </header>
 
@@ -366,6 +366,32 @@ async function auth(kind) {
   }
 }
 
+function showVerify(text) {
+  $('#verifyBox').hidden = false;
+  $('#msg').classList.remove('err');
+  $('#msg').textContent = text;
+  $('#lCode').focus();
+}
+async function neonAuth(path, body) {
+  const res = await fetch(NEON_AUTH_URL + path, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  return res.ok ? { data } : { error: { message: data.message || 'Erreur ' + res.status } };
+}
+$('#lVerify').onclick = async () => {
+  const email = $('#lMail').value.trim(), otp = $('#lCode').value.trim();
+  if (!otp) return;
+  $('#msg').textContent = 'Vérification en cours...';
+  const r = db.auth.emailOtp?.verifyEmail ? await db.auth.emailOtp.verifyEmail({ email, otp }) : await neonAuth('/email-otp/verify-email', { email, otp });
+  if (r.error) { $('#msg').classList.add('err'); $('#msg').textContent = r.error.message; return; }
+  $('#verifyBox').hidden = true;
+  $('#msg').textContent = '✓ Courriel confirmé. Cliquez maintenant sur « Se connecter ».';
+};
+$('#lResend').onclick = async () => {
+  const email = $('#lMail').value.trim();
+  const r = db.auth.emailOtp?.sendVerificationOtp ? await db.auth.emailOtp.sendVerificationOtp({ email, type: 'email-verification' }) : await neonAuth('/email-otp/send-verification-otp', { email, type: 'email-verification' });
+  $('#msg').classList.toggle('err', !!r.error);
+  $('#msg').textContent = r.error ? r.error.message : 'Un nouveau code a été envoyé.';
+};
 
 $('#lIn').onclick = () => auth('in');
 $('#lUp').onclick = () => auth('up');

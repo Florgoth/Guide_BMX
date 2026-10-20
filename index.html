@@ -64,8 +64,9 @@ input[type=checkbox]{width:auto;margin-right:8px}
 </head>
 <body>
 <header>
-  <h1><img src="favicon.png" alt="" class="logo">GUIDE D'EXERCICES BMX RIVE-SUD</h1>
-  <div><button id="btnLogin" class="anon">Connexion coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
+  <h1>GUIDE D'EXERCICES BMX RIVE-SUD</h1>
+  <img src="favicon.png" alt="" class="logo">
+  <div><button id="btnLogin" class="anon">Connexion Coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
 </header>
 
 <main>
@@ -82,7 +83,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 
   <section id="plan">
     <h2>Mon entrainement</h2>
-    <label for="planName">Nom de la seance</label>
+    <label for="planName">Nom de la séance</label>
     <input id="planName" placeholder="Ex. : Mardi, manual et sauts">
     <div id="planItems" style="margin-top:12px"></div>
     <div class="actions">
@@ -90,7 +91,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
       <button id="btnPrint">Imprimer</button>
       <button id="btnSave" class="main edit">Enregistrer</button>
     </div>
-    <div class="saved"><h3>Mes seances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Partagees avec moi</h3><div id="shared" style="display:block"></div></div>
+    <div class="saved"><h3>Mes séances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Séances partagées avec moi</h3><div id="shared" style="display:block"></div></div>
   </section>
 </main>
 
@@ -126,7 +127,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 <dialog id="dLogin">
   <h2>Connexion coach</h2>
   <div id="loginFields">
-    <label for="lName">Nom du coach (a l'inscription)</label><input id="lName" autocomplete="name">
+    <label for="lName">Nom du coach (à l'inscription)</label><input id="lName" autocomplete="name">
     <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
     <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
   </div>
@@ -144,7 +145,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
   
   <div class="actions">
     <button data-close>Annuler</button>
-    <button id="lUp">Creer un compte</button>
+    <button id="lUp">Créer un compte</button>
     <button id="lIn" class="main">Se connecter</button>
   </div>
 </dialog>

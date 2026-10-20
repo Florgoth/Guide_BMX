@@ -340,15 +340,26 @@ async function auth(kind) {
   const nameInput = $('#lName').value.trim();
   const creds = { email: $('#lMail').value, password: $('#lPass').value };
   
+  if (kind === 'up' && !nameInput) {
+    $('#msg').textContent = 'Veuillez entrer votre nom de coach.';
+    return;
+  }
+
   const r = kind === 'up' 
     ? await db.auth.signUp({ ...creds, options: { data: { name: nameInput } } }) 
     : await db.auth.signInWithPassword(creds);
 
   if (r.error) {
-    $('#msg').textContent = r.error.message;
+    if (r.error.message.includes('Email verification required')) {
+      $('#msg').textContent = 'Veuillez vérifier votre boîte courriel pour confirmer votre compte avant de vous connecter.';
+    } else {
+      $('#msg').textContent = r.error.message;
+    }
   } else {
-    $('#msg').textContent = kind === 'up' && !r.data.session ? 'Compte cree. Confirmez votre courriel, puis connectez-vous.' : '';
-    if (r.data?.session || kind === 'in') {
+    if (kind === 'up') {
+      $('#msg').style.color = 'var(--gate)';
+      $('#msg').textContent = 'Compte créé ! Un courriel de confirmation vous a été envoyé. Veuillez valider votre adresse.';
+    } else {
       closeAll();
       location.reload();
     }

@@ -374,15 +374,9 @@ async function refreshSession(s) {
   await load();
 }
 
-db.auth.onAuthStateChange((event, s) => {
-  if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-    location.reload();
-  } else {
-    setTimeout(() => refreshSession(s), 0);
-  }
-});
-
-load();
+db.auth.onAuthStateChange((_event, s) => setTimeout(() => refreshSession(s), 0));
+refreshSession().catch(() => load());
+  
 </script>
 </body>
 </html>

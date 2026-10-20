@@ -289,14 +289,100 @@ $('#btnSave').onclick = async () => {
 };
 
 function openCoaches(id) {
-  const w = workouts.find(x => x.id === id);
-  if (!w) return;
-  $('#cTitle').textContent = `Partager : ${w.name}`;
-  $('#cAll').checked = false;
-  $('#coachList').innerHTML = coaches.filter(c => c.id !== me?.id)
-    .map(c => `<label><input type="checkbox" value="${esc(c.id)}">${esc(c.name || 'Coach')}</label>`).join('');
-  $('#dCoaches').showModal();
+  const w = workouts.find(x => x.id === id), on = !!w;
+  $('#cTitle').textContent = on ? 'Partager "' + w.name + '"' : 'Coachs inscrits';
+  $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
+  
+  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || 'Coach sans nom')}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
+  $('#cSave').dataset.id = id || ''; $('#dCoaches').showModal();
 }
+$('#btnCoaches').onclick = () => openCoaches();
+$('#cSave').onclick = async () => {
+  const ids = [...document.querySelectorAll('#coachList input:checked')].map(i => i.value);
+  const r = await db.from('workouts').update({ shared_all: $('#cAll').checked, shared_with: ids }).eq('id', $('#cSave').dataset.id);
+  if (r.error) alert('Erreur : ' + r.error.message); else { closeAll(); load(); }
+};
+$('#btnLogin').onclick = () => {
+  $('#msg').textContent = '';
+  $('#msg').classList.remove('err');
+  $('#dLogin').showModal();
+};
+$('#btnLogout').onclick = async () => { await db.auth.signOut(); location.reload(); };
+
+async function auth(kind) {
+  const nameInput = $('#lName').value.trim();
+  const creds = { email: $('#lMail').value.trim(), password: $('#lPass').value };
+  
+  $('#msg').classList.remove('err');
+
+  if (kind === 'up') {
+    if (!nameInput) {
+      $('#msg').classList.add('err');
+      $('#msg').textContent = 'Veuillez entrer votre nom de coach.';
+      return;
+    }
+    $('#msg').textContent = 'Création du compte en cours...';
+    try {
+      const r = await db.auth.signUp({ ...creds, options: { data: { name: nameInput } } });
+      if (r.error) {
+        $('#msg').classList.add('err');
+        $('#msg').textContent = r.error.message;
+      } else {
+        $('#msg').textContent = '✓ Compte créé avec succès ! Un courriel de vérification vous a été envoyé. Veuillez cliquer sur le lien dans votre courriel pour activer votre compte.';
+      }
+    } catch (err) {
+      $('#msg').classList.add('err');
+      $('#msg').textContent = 'Erreur lors de l’inscription : ' + (err.message || err);
+    }
+  } else if (kind === 'in') {
+    $('#msg').textContent = 'Connexion en cours...';
+    try {
+      const r = await db.auth.signInWithPassword(creds);
+      if (r.error) {
+        $('#msg').classList.add('err');
+        if (r.error.message.toLowerCase().includes('verification') || r.error.message.toLowerCase().includes('confirm')) {
+          $('#msg').textContent = 'Vérification requise : Veuillez valider votre courriel via le lien reçu avant de vous connecter.';
+        } else {
+          $('#msg').textContent = r.error.message;
+        }
+      } else {
+        closeAll();
+        location.reload();
+      }
+    } catch (err) {
+      $('#msg').classList.add('err');
+      $('#msg').textContent = 'Erreur lors de la connexion : ' + (err.message || err);
+    }
+  }
+}
+
+$('#lIn').onclick = () => auth('in');
+$('#lUp').onclick = () => auth('up');
+
+async function refreshSession(s) {
+  if (s === undefined) s = (await db.auth.getSession()).data?.session;
+  me = s?.user || null;
+  document.body.classList.toggle('authed', !!me);
+  if (!me) wid = null;
+
+  if (me) {
+    const actualName = me.user_metadata?.name || me.raw_user_meta_data?.name || me.name;
+    if (actualName) {
+      await db.from('profiles').upsert({ id: me.id, name: actualName, email: me.email });
+    }
+  }
+  await load();
+}
+
+db.auth.onAuthStateChange((event, s) => {
+  if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+    location.reload();
+  } else {
+    setTimeout(() => refreshSession(s), 0);
+  }
+});
+
+load();
 </script>
 </body>
 </html>

@@ -189,7 +189,9 @@ function render() {
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
   const shown = groups.filter(g => cat === 'all' || g.id === cat);
-  $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' || i === 0)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
+  $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' )).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
+     // $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' || i === 0)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
+
   renderPlan();
   
   const owner = id => {
@@ -299,7 +301,8 @@ $('#btnSave').onclick = async () => {
 
 async function openCoaches(id) {
   const c = await db.from('coaches').select().order('name');
-  if (!c.error) coaches = c.data;
+  //if (!c.error) coaches = c.data;
+  if (c.error) alert('Liste des coachs : ' + c.error.message); else coaches = c.data;
   const w = workouts.find(x => x.id === id), on = !!w;
   $('#cTitle').textContent = on ? 'Partager "' + w.name + '"' : 'Coachs inscrits';
   $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;

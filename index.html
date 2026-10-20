@@ -58,7 +58,6 @@ label{display:block;font-weight:600;margin:10px 0 4px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}.chips button{white-space:nowrap;padding:4px 12px;border-radius:99px}.chips button.on{background:var(--gate);border-color:var(--gate);color:var(--dark)}
 input[type=checkbox]{width:auto;margin-right:8px}
 #catSel{display:none}.authed #catSel{display:block}
-.verify-section{margin-top:14px;padding-top:12px;border-top:2px dashed var(--line);display:none}
 @media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
 </style>
 </head>
@@ -129,12 +128,6 @@ input[type=checkbox]{width:auto;margin-right:8px}
     <label for="lName">Nom du coach (a l'inscription)</label><input id="lName" autocomplete="name">
     <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
     <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
-  </div>
-
-  <div id="verifySection" class="verify-section">
-    <label for="vCode">Code de confirmation (reçu par courriel)</label>
-    <input id="vCode" placeholder="Entrez le code à 6 chiffres">
-    <button id="btnVerifyCode" class="main" style="width:100%;margin-top:8px">Valider le code</button>
   </div>
 
   <p id="msg"></p>
@@ -224,7 +217,7 @@ function openView(id) {
 function openForm(x) {
   editing = x || null; photos = [...(x?.photos || [])];
   $('#fTitle').textContent = x ? 'Modifier l\'exercice' : 'Nouvel exercice';
-  $('#fName').value = x?.name \vert{}\vert{} ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
+  $('#fName').value = x?.name || ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
   $('#fGroup').innerHTML = groups.map(g => `<option value="${g.id}" ${g.id === x?.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
   drawPhotos(); $('#dForm').showModal();
 }
@@ -250,7 +243,7 @@ async function saveExercise() {
   if (!name) { $('#fMsg').textContent = 'Le nom est obligatoire.'; return; }
   $('#fMsg').textContent = 'Envoi en cours...';
   for (const f of $('#fFiles').files) photos.push(await shrink(f));
-  const row = { name, group_id: $('#fGroup').value \vert{}\vert{} null, description: $('#fDesc').value, photos };
+  const row = { name, group_id: $('#fGroup').value || null, description: $('#fDesc').value, photos };
   const r = editing ? await db.from('exercises').update(row).eq('id', editing.id) : await db.from('exercises').insert(row);
   if (r.error) { $('#fMsg').textContent = 'Erreur : ' + r.error.message; return; }
   closeAll(); load();
@@ -296,117 +289,14 @@ $('#btnSave').onclick = async () => {
 };
 
 function openCoaches(id) {
-  const w = workouts.find(x => x.id === id), on = !!w;
-  $('#cTitle').textContent = on ? 'Partager "' + w.name + '"' : 'Coachs inscrits';
-  $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
-  
-  $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || 'Coach sans nom')}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
-  $('#cSave').dataset.id = id \vert{}\vert{} ''; $('#dCoaches').showModal();
+  const w = workouts.find(x => x.id === id);
+  if (!w) return;
+  $('#cTitle').textContent = `Partager : ${w.name}`;
+  $('#cAll').checked = false;
+  $('#coachList').innerHTML = coaches.filter(c => c.id !== me?.id)
+    .map(c => `<label><input type="checkbox" value="${esc(c.id)}">${esc(c.name || 'Coach')}</label>`).join('');
+  $('#dCoaches').showModal();
 }
-$('#btnCoaches').onclick = () => openCoaches();
-$('#cSave').onclick = async () => {
-  const ids = [...document.querySelectorAll('#coachList input:checked')].map(i => i.value);
-  const r = await db.from('workouts').update({ shared_all: $('#cAll').checked, shared_with: ids }).eq('id', $('#cSave').dataset.id);
-  if (r.error) alert('Erreur : ' + r.error.message); else { closeAll(); load(); }
-};
-$('#btnLogin').onclick = () => {
-  $('#msg').textContent = '';
-  $('#msg').classList.remove('err');
-  $('#verifySection').style.display = 'none';
-  $('#dLogin').showModal();
-};
-$('#btnLogout').onclick = async () => { await db.auth.signOut(); location.reload(); };
-
-async function auth(kind) {
-  const nameInput = $('#lName').value.trim();
-  const creds = { email: $('#lMail').value.trim(), password: $('#lPass').value };
-  
-  $('#msg').classList.remove('err');
-
-  if (kind === 'up') {
-    if (!nameInput) {
-      $('#msg').classList.add('err');
-      $('#msg').textContent = 'Veuillez entrer votre nom de coach.';
-      return;
-    }
-    $('#msg').textContent = 'Création du compte en cours...';
-    const r = await db.auth.signUp({ ...creds, options: { data: { name: nameInput } } });
-    if (r.error) {
-      $('#msg').classList.add('err');
-      $('#msg').textContent = r.error.message;
-    } else {
-      $('#msg').textContent = '✓ Compte créé avec succès ! Un courriel de vérification a été envoyé. Si vous avez un code, entrez-le ci-dessous ou cliquez sur le lien dans votre courriel.';
-      $('#verifySection').style.display = 'block';
-    }
-  } else if (kind === 'in') {
-    $('#msg').textContent = 'Connexion en cours...';
-    const r = await db.auth.signInWithPassword(creds);
-    if (r.error) {
-      $('#msg').classList.add('err');
-      if (r.error.message.toLowerCase().includes('email verification') || r.error.message.toLowerCase().includes('confirm')) {
-        $('#msg').textContent = 'Vérification requise : Un code de confirmation vous a été envoyé par courriel. Entrez-le ci-dessous.';
-        $('#verifySection').style.display = 'block';
-      } else {
-        $('#msg').textContent = r.error.message;
-      }
-    } else {
-      closeAll();
-      location.reload();
-    }
-  }
-}
-
-// Action de validation du code OTP
-$('#btnVerifyCode').onclick = async () => {
-  const token = $('#vCode').value.trim();
-  const email = $('#lMail').value.trim();
-  
-  if (!token) {
-    $('#msg').classList.add('err');
-    $('#msg').textContent = 'Veuillez entrer le code de confirmation.';
-    return;
-  }
-  
-  $('#msg').classList.remove('err');
-  $('#msg').textContent = 'Validation du code...';
-
-  const r = await db.auth.verifyOtp({ email, token, type: 'signup' });
-  if (r.error) {
-    $('#msg').classList.add('err');
-    $('#msg').textContent = r.error.message;
-  } else {
-    $('#msg').textContent = '✓ Adresse vérifiée avec succès ! Connexion...';
-    setTimeout(() => location.reload(), 1200);
-  }
-};
-
-$('#lIn').onclick = () => auth('in');
-$('#lUp').onclick = () => auth('up');
-
-async function refreshSession(s) {
-  if (s === undefined) s = (await db.auth.getSession()).data?.session;
-  me = s?.user || null;
-  document.body.classList.toggle('authed', !!me);
-  if (!me) wid = null;
-
-  if (me) {
-    const actualName = me.user_metadata?.name || me.raw_user_meta_data?.name || me.name;
-    if (actualName) {
-      await db.from('profiles').upsert({ id: me.id, name: actualName, email: me.email });
-    }
-  }
-  await load();
-}
-
-db.auth.onAuthStateChange((event, s) => {
-  if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-    location.reload();
-  } else {
-    setTimeout(() => refreshSession(s), 0);
-  }
-});
-
-load();
 </script>
 </body>
 </html>

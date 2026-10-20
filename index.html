@@ -164,7 +164,7 @@ async function load() {
     db.from('groups').select().order('position'),
     db.from('exercises').select().order('name'),
     db.from('workouts').select().order('created_at', { ascending: false }),
-    db.from('profiles').select().order('name')
+    db.from('coaches').select().order('name')
   ]);
   if (g.error) {
     console.error(g.error);
@@ -297,7 +297,9 @@ $('#btnSave').onclick = async () => {
   if (r.error) alert('Erreur : ' + r.error.message); else { wid = r.data[0].id; load(); }
 };
 
-function openCoaches(id) {
+async function openCoaches(id) {
+  const c = await db.from('coaches').select().order('name');
+  if (!c.error) coaches = c.data;
   const w = workouts.find(x => x.id === id), on = !!w;
   $('#cTitle').textContent = on ? 'Partager "' + w.name + '"' : 'Coachs inscrits';
   $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;

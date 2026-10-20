@@ -128,7 +128,10 @@ input[type=checkbox]{width:auto;margin-right:8px}
 <dialog id="dLogin">
   <h2>Connexion coach</h2>
   <div id="loginFields">
-    <label for="lName">Nom du coach (à l'inscription)</label><input id="lName" autocomplete="name">
+    <div id="nameBox" hidden>
+  <label for="lName">Nom du coach (visible par les autres coachs)</label>
+  <input id="lName" autocomplete="name">
+</div>
     <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
     <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
   </div>
@@ -320,6 +323,7 @@ $('#cSave').onclick = async () => {
   if (r.error) alert('Erreur : ' + r.error.message); else { closeAll(); load(); }
 };
 $('#btnLogin').onclick = () => {
+  $('#nameBox').hidden = true;
   $('#msg').textContent = '';
   $('#msg').classList.remove('err');
   $('#dLogin').showModal();
@@ -333,6 +337,14 @@ async function auth(kind) {
   $('#msg').classList.remove('err');
 
   if (kind === 'up') {
+
+        if ($('#nameBox').hidden) {
+      $('#nameBox').hidden = false;
+      $('#lName').focus();
+      $('#msg').textContent = 'Entrez votre nom de coach, puis cliquez à nouveau sur « Créer un compte ».';
+      return;
+    }
+
     if (!nameInput) {
       $('#msg').classList.add('err');
       $('#msg').textContent = 'Veuillez entrer votre nom de coach.';
@@ -375,6 +387,7 @@ async function auth(kind) {
 }
 
 function showVerify(text) {
+  $('#nameBox').hidden = true;
   $('#verifyBox').hidden = false;
   $('#msg').classList.remove('err');
   $('#msg').textContent = text;
@@ -401,7 +414,7 @@ $('#lResend').onclick = async () => {
   $('#msg').textContent = r.error ? r.error.message : 'Un nouveau code a été envoyé.';
 };
 
-$('#lIn').onclick = () => auth('in');
+$('#lIn').onclick = () => { $('#nameBox').hidden = true; auth('in'); };
 $('#lUp').onclick = () => auth('up');
 
 async function refreshSession(s) {

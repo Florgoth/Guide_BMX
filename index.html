@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Carnet de coach BMX Rive-Sud</title>
+<title>Guide de coach BMX Rive-Sud</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -63,7 +63,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 </head>
 <body>
 <header>
-  <h1>Carnet de coach BMX Rive-Sud</h1>
+  <h1>Guide d'exercices BMX Rive-Sud</h1>
   <div><button id="btnLogin" class="anon">Connexion coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
 </header>
 
@@ -131,6 +131,15 @@ input[type=checkbox]{width:auto;margin-right:8px}
   </div>
 
   <p id="msg"></p>
+
+  <div id="verifyBox" hidden>
+  <label for="lCode">Code de vérification reçu par courriel</label>
+  <input id="lCode" inputmode="numeric" autocomplete="one-time-code">
+  <div class="actions">
+    <button id="lResend">Renvoyer le code</button>
+    <button id="lVerify" class="main">Confirmer</button>
+  </div>
+</div>
   
   <div class="actions">
     <button data-close>Annuler</button>
@@ -312,7 +321,7 @@ $('#btnLogout').onclick = async () => { await db.auth.signOut(); location.reload
 async function auth(kind) {
   const nameInput = $('#lName').value.trim();
   const creds = { email: $('#lMail').value.trim(), password: $('#lPass').value };
-  
+
   $('#msg').classList.remove('err');
 
   if (kind === 'up') {
@@ -324,11 +333,11 @@ async function auth(kind) {
     $('#msg').textContent = 'Création du compte en cours...';
     try {
       const r = await db.auth.signUp({ ...creds, options: { data: { name: nameInput } } });
-      if (r.error) {
+      if (!r.error || /session/i.test(r.error.message)) {
+        showVerify('Un code a été envoyé à ' + creds.email + '. Entrez-le ci-dessous.');
+      } else {
         $('#msg').classList.add('err');
         $('#msg').textContent = r.error.message;
-      } else {
-        $('#msg').textContent = '✓ Compte créé avec succès ! Un courriel de vérification vous a été envoyé. Veuillez cliquer sur le lien dans votre courriel pour activer votre compte.';
       }
     } catch (err) {
       $('#msg').classList.add('err');
@@ -339,10 +348,11 @@ async function auth(kind) {
     try {
       const r = await db.auth.signInWithPassword(creds);
       if (r.error) {
-        $('#msg').classList.add('err');
-        if (r.error.message.toLowerCase().includes('verification') || r.error.message.toLowerCase().includes('confirm')) {
-          $('#msg').textContent = 'Vérification requise : Veuillez valider votre courriel via le lien reçu avant de vous connecter.';
+        const m = r.error.message.toLowerCase();
+        if (m.includes('verif') || m.includes('confirm')) {
+          showVerify('Courriel non confirmé : entrez le code reçu, ou cliquez sur « Renvoyer le code ».');
         } else {
+          $('#msg').classList.add('err');
           $('#msg').textContent = r.error.message;
         }
       } else {
@@ -355,6 +365,7 @@ async function auth(kind) {
     }
   }
 }
+
 
 $('#lIn').onclick = () => auth('in');
 $('#lUp').onclick = () => auth('up');
@@ -376,7 +387,7 @@ async function refreshSession(s) {
 
 db.auth.onAuthStateChange((_event, s) => setTimeout(() => refreshSession(s), 0));
 refreshSession().catch(() => load());
-  
+
 </script>
 </body>
 </html>

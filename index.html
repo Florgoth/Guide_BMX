@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Guide d'entraînement BMX RIVE-SUD</title>
+<title>Carnet de coach BMX Rive-Sud</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#232428;--card:#2f3035;--ink:#f2f2f4;--dark:#17181b;--mute:#a9abb4;--line:#46474f;--gate:#ffd400;--pink:#d81b72;--orange:#ff7a1a;--err:#ff7b7b}
@@ -49,24 +50,22 @@ label{display:block;font-weight:600;margin:10px 0 4px}
 .photos div{position:relative}
 .photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block}
 .photos button{position:absolute;top:4px;right:4px;padding:0 7px}
-.ex .edit-inline {
-  padding: 2px 8px;
-  line-height: 1;
-}
 .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px}
 .desc{white-space:pre-wrap}
 .edit{display:none}.authed .edit{display:inline-block}.authed .anon{display:none}
-#msg{color:var(--err);min-height:1.4em}
+#msg{color:var(--gate);min-height:1.4em;font-weight:600;margin-top:10px}
+#msg.err{color:var(--err)}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}.chips button{white-space:nowrap;padding:4px 12px;border-radius:99px}.chips button.on{background:var(--gate);border-color:var(--gate);color:var(--dark)}
 input[type=checkbox]{width:auto;margin-right:8px}
 #catSel{display:none}.authed #catSel{display:block}
+.verify-section{margin-top:14px;padding-top:12px;border-top:2px dashed var(--line);display:none}
 @media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
 </style>
 </head>
 <body>
 <header>
-  <h1>Guide d'entraînement BMX RIVE-SUD</h1>
-  <div><button id="btnLogin" class="anon">Connexion Coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
+  <h1>Carnet de coach BMX Rive-Sud</h1>
+  <div><button id="btnLogin" class="anon">Connexion coach</button><button id="btnCoaches" class="edit">Coachs inscrits</button> <button id="btnLogout" class="edit">Déconnexion</button></div>
 </header>
 
 <main>
@@ -91,7 +90,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
       <button id="btnPrint">Imprimer</button>
       <button id="btnSave" class="main edit">Enregistrer</button>
     </div>
-    <div class="saved"><h3>Mes séances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Partagées avec moi</h3><div id="shared" style="display:block"></div></div>
+    <div class="saved"><h3>Mes seances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Partagees avec moi</h3><div id="shared" style="display:block"></div></div>
   </section>
 </main>
 
@@ -126,25 +125,29 @@ input[type=checkbox]{width:auto;margin-right:8px}
 
 <dialog id="dLogin">
   <h2>Connexion coach</h2>
-  <label for="lName">Nom du coach (à l'inscription)</label><input id="lName" autocomplete="name">
-  <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
-  <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
+  <div id="loginFields">
+    <label for="lName">Nom du coach (a l'inscription)</label><input id="lName" autocomplete="name">
+    <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
+    <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
+  </div>
+
+  <div id="verifySection" class="verify-section">
+    <label for="vCode">Code de confirmation (reçu par courriel)</label>
+    <input id="vCode" placeholder="Entrez le code à 6 chiffres">
+    <button id="btnVerifyCode" class="main" style="width:100%;margin-top:8px">Valider le code</button>
+  </div>
+
   <p id="msg"></p>
-  <div class="actions"><button data-close>Annuler</button><button id="lUp">Creer un compte</button><button id="lIn" class="main">Se connecter</button></div>
+  
+  <div class="actions">
+    <button data-close>Annuler</button>
+    <button id="lUp">Creer un compte</button>
+    <button id="lIn" class="main">Se connecter</button>
+  </div>
 </dialog>
 
 <script type="module">
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
-// Liste des courriels des administrateurs
-const ADMIN_EMAILS = ['mephisto_77@hotmail.com', 'mabeaulieu@bmxrivesud.com']; 
-
-// Détection automatique du rôle admin via Better Auth / Neon Auth
-function isAdmin() {
-  if (!me) return false;
-  // Vérifie si le rôle admin est présent dans la liste des profils chargés
-  const myProfile = coaches.find(c => c.id === me.id);
-  return myProfile?.role === 'admin' || me.user_metadata?.role === 'admin';
-}
 
 const NEON_AUTH_URL = 'https://ep-patient-haze-b4h5fzuq.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
 const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
@@ -177,15 +180,9 @@ function render() {
   const q = $('#search').value.trim().toLowerCase();
   const byGroup = id => exercises.filter(x => x.group_id === id && (!q || (x.name + x.description).toLowerCase().includes(q)));
   const none = exercises.filter(x => !groups.some(g => g.id === x.group_id) && (!q || x.name.toLowerCase().includes(q)));
-  
-  // Ajout du bouton "Supprimer" (.edit-inline) à côté de chaque exercice
   const block = (name, list, open) => `<details ${open || q ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
-    list.map(x => `<div class="ex">
-      <div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
-      <button class="name" data-view="${x.id}">${esc(x.name)}</button>
-      <button data-add="${x.id}">Ajouter</button>
-      ${isAdmin() ? `<button class="danger edit-inline" data-delex="${x.id}" title="Supprimer cet exercice">&times;</button>` : ''}
-    </div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
+    list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
+    <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
   
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
@@ -221,17 +218,13 @@ function openView(id) {
   $('#vGroup').textContent = groups.find(g => g.id === x.group_id)?.name || 'Sans groupe';
   $('#vDesc').textContent = x.description || 'Pas de description.';
   $('#vPhotos').innerHTML = (x.photos || []).map(u => `<img src="${esc(u)}" alt="${esc(x.name)}">`).join('');
-  
-  // Affichage du bouton supprimer seulement si admin
-  $('#vDel').style.display = isAdmin() ? 'inline-block' : 'none';
-  
   $('#dView').showModal();
 }
 
 function openForm(x) {
   editing = x || null; photos = [...(x?.photos || [])];
   $('#fTitle').textContent = x ? 'Modifier l\'exercice' : 'Nouvel exercice';
-  $('#fName').value = x?.name || ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
+  $('#fName').value = x?.name \vert{}\vert{} ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
   $('#fGroup').innerHTML = groups.map(g => `<option value="${g.id}" ${g.id === x?.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
   drawPhotos(); $('#dForm').showModal();
 }
@@ -257,7 +250,7 @@ async function saveExercise() {
   if (!name) { $('#fMsg').textContent = 'Le nom est obligatoire.'; return; }
   $('#fMsg').textContent = 'Envoi en cours...';
   for (const f of $('#fFiles').files) photos.push(await shrink(f));
-  const row = { name, group_id: $('#fGroup').value || null, description: $('#fDesc').value, photos };
+  const row = { name, group_id: $('#fGroup').value \vert{}\vert{} null, description: $('#fDesc').value, photos };
   const r = editing ? await db.from('exercises').update(row).eq('id', editing.id) : await db.from('exercises').insert(row);
   if (r.error) { $('#fMsg').textContent = 'Erreur : ' + r.error.message; return; }
   closeAll(); load();
@@ -270,22 +263,6 @@ document.addEventListener('click', async e => {
   if (d('cat')) { cat = d('cat'); render(); }
   if (d('share')) openCoaches(d('share'));
   if (d('add')) addToPlan(d('add'));
-
-  // NOUVEAU : Suppression directe de l'exercice depuis la liste
-  if (d('delex')) {
-    if (!isAdmin()) {
-      alert("Seul un administrateur peut supprimer des exercices.");
-      return;
-    }
-    const exId = d('delex');
-    const ex = exercises.find(x => x.id === exId);
-    if (ex && confirm('Voulez-vous vraiment supprimer définitivement l\'exercice "' + ex.name + '" ?')) {
-      await db.from('exercises').delete().eq('id', exId);
-      plan = plan.filter(p => p.id !== exId);
-      load();
-    }
-  }
-
   if (d('up') && +d('up') > 0) { const i = +d('up'); [plan[i - 1], plan[i]] = [plan[i], plan[i - 1]]; renderPlan(); }
   if (d('down') && +d('down') < plan.length - 1) { const i = +d('down'); [plan[i + 1], plan[i]] = [plan[i], plan[i + 1]]; renderPlan(); }
   if (d('rm')) { plan.splice(+d('rm'), 1); renderPlan(); }
@@ -293,7 +270,6 @@ document.addEventListener('click', async e => {
   if (d('load')) { const w = workouts.find(x => x.id === d('load')); plan = [...w.items]; wid = w.user_id === me?.id ? w.id : null; $('#planName').value = w.name; renderPlan(); }
   if (d('delw') && confirm('Supprimer cette seance ?')) { await db.from('workouts').delete().eq('id', d('delw')); load(); }
 });
-
 document.addEventListener('input', e => { if (e.target.dataset.detail !== undefined) plan[+e.target.dataset.detail].detail = e.target.value; });
 
 $('#search').oninput = render;
@@ -325,7 +301,7 @@ function openCoaches(id) {
   $('#cAll').parentElement.hidden = !on; $('#cSave').hidden = !on; $('#cAll').checked = !!w?.shared_all;
   
   $('#coachList').innerHTML = coaches.filter(c => !on || c.id !== me?.id).map(c => `<label><input type="checkbox" value="${c.id}" ${on ? '' : 'hidden'} ${w?.shared_with?.includes(c.id) ? 'checked' : ''}>${esc(c.name || 'Coach sans nom')}</label>`).join('') || '<p class="empty">Aucun autre coach inscrit.</p>';
-  $('#cSave').dataset.id = id || ''; $('#dCoaches').showModal();
+  $('#cSave').dataset.id = id \vert{}\vert{} ''; $('#dCoaches').showModal();
 }
 $('#btnCoaches').onclick = () => openCoaches();
 $('#cSave').onclick = async () => {
@@ -333,38 +309,77 @@ $('#cSave').onclick = async () => {
   const r = await db.from('workouts').update({ shared_all: $('#cAll').checked, shared_with: ids }).eq('id', $('#cSave').dataset.id);
   if (r.error) alert('Erreur : ' + r.error.message); else { closeAll(); load(); }
 };
-$('#btnLogin').onclick = () => $('#dLogin').showModal();
+$('#btnLogin').onclick = () => {
+  $('#msg').textContent = '';
+  $('#msg').classList.remove('err');
+  $('#verifySection').style.display = 'none';
+  $('#dLogin').showModal();
+};
 $('#btnLogout').onclick = async () => { await db.auth.signOut(); location.reload(); };
 
 async function auth(kind) {
   const nameInput = $('#lName').value.trim();
-  const creds = { email: $('#lMail').value, password: $('#lPass').value };
+  const creds = { email: $('#lMail').value.trim(), password: $('#lPass').value };
   
-  if (kind === 'up' && !nameInput) {
-    $('#msg').textContent = 'Veuillez entrer votre nom de coach.';
-    return;
-  }
+  $('#msg').classList.remove('err');
 
-  const r = kind === 'up' 
-    ? await db.auth.signUp({ ...creds, options: { data: { name: nameInput } } }) 
-    : await db.auth.signInWithPassword(creds);
-
-  if (r.error) {
-    if (r.error.message.includes('Email verification required')) {
-      $('#msg').textContent = 'Veuillez vérifier votre boîte courriel pour confirmer votre compte avant de vous connecter.';
-    } else {
-      $('#msg').textContent = r.error.message;
+  if (kind === 'up') {
+    if (!nameInput) {
+      $('#msg').classList.add('err');
+      $('#msg').textContent = 'Veuillez entrer votre nom de coach.';
+      return;
     }
-  } else {
-    if (kind === 'up') {
-      $('#msg').style.color = 'var(--gate)';
-      $('#msg').textContent = 'Compte créé ! Un courriel de confirmation vous a été envoyé. Veuillez valider votre adresse.';
+    $('#msg').textContent = 'Création du compte en cours...';
+    const r = await db.auth.signUp({ ...creds, options: { data: { name: nameInput } } });
+    if (r.error) {
+      $('#msg').classList.add('err');
+      $('#msg').textContent = r.error.message;
+    } else {
+      $('#msg').textContent = '✓ Compte créé avec succès ! Un courriel de vérification a été envoyé. Si vous avez un code, entrez-le ci-dessous ou cliquez sur le lien dans votre courriel.';
+      $('#verifySection').style.display = 'block';
+    }
+  } else if (kind === 'in') {
+    $('#msg').textContent = 'Connexion en cours...';
+    const r = await db.auth.signInWithPassword(creds);
+    if (r.error) {
+      $('#msg').classList.add('err');
+      if (r.error.message.toLowerCase().includes('email verification') || r.error.message.toLowerCase().includes('confirm')) {
+        $('#msg').textContent = 'Vérification requise : Un code de confirmation vous a été envoyé par courriel. Entrez-le ci-dessous.';
+        $('#verifySection').style.display = 'block';
+      } else {
+        $('#msg').textContent = r.error.message;
+      }
     } else {
       closeAll();
       location.reload();
     }
   }
 }
+
+// Action de validation du code OTP
+$('#btnVerifyCode').onclick = async () => {
+  const token = $('#vCode').value.trim();
+  const email = $('#lMail').value.trim();
+  
+  if (!token) {
+    $('#msg').classList.add('err');
+    $('#msg').textContent = 'Veuillez entrer le code de confirmation.';
+    return;
+  }
+  
+  $('#msg').classList.remove('err');
+  $('#msg').textContent = 'Validation du code...';
+
+  const r = await db.auth.verifyOtp({ email, token, type: 'signup' });
+  if (r.error) {
+    $('#msg').classList.add('err');
+    $('#msg').textContent = r.error.message;
+  } else {
+    $('#msg').textContent = '✓ Adresse vérifiée avec succès ! Connexion...';
+    setTimeout(() => location.reload(), 1200);
+  }
+};
+
 $('#lIn').onclick = () => auth('in');
 $('#lUp').onclick = () => auth('up');
 
@@ -375,27 +390,11 @@ async function refreshSession(s) {
   if (!me) wid = null;
 
   if (me) {
-    // Récupération du nom d'affichage à l'inscription
-    const actualName = me.user_metadata?.name || me.raw_user_meta_data?.name || me.name || me.email.split('@')[0];
-    
-    // Tentative d'insertion/mise à jour dans profiles
-    const { error } = await db.from('profiles').upsert({
-      id: me.id,
-      name: actualName,
-      email: me.email
-    }, { onConflict: 'id' });
-
-    if (error) {
-      console.warn("Erreur upsert profile, tentative d'insertion brute :", error.message);
-      await db.from('profiles').insert({
-        id: me.id,
-        name: actualName,
-        email: me.email
-      });
+    const actualName = me.user_metadata?.name || me.raw_user_meta_data?.name || me.name;
+    if (actualName) {
+      await db.from('profiles').upsert({ id: me.id, name: actualName, email: me.email });
     }
   }
-  
-  // Rechargement des données fraîches depuis Neon
   await load();
 }
 

@@ -165,6 +165,8 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let groups = [], exercises = [], workouts = [], plan = [], current = null, editing = null, photos = [], cat = 'all', coaches = [], me = null, wid = null;
 
+let isAdmin = false;
+
 async function load() {
   const [g, e, w, p] = await Promise.all([
     db.from('groups').select().order('position'),
@@ -181,6 +183,8 @@ async function load() {
     return;
   }
   groups = g.data; exercises = e.data || []; workouts = w.data || []; coaches = p.data || [];
+  const a = await db.rpc('is_admin');
+    isAdmin = a.data === true;
   render();
 }
 
@@ -188,14 +192,17 @@ function render() {
   const q = $('#search').value.trim().toLowerCase();
   const byGroup = id => exercises.filter(x => x.group_id === id && (!q || (x.name + x.description).toLowerCase().includes(q)));
   const none = exercises.filter(x => !groups.some(g => g.id === x.group_id) && (!q || x.name.toLowerCase().includes(q)));
-  const block = (name, list, open) => `<details ${open || (q && list.length) ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
-    list.map(x => `<div class="ex"><div class="thumb" style="${x.photos?.[0] ? `background-image:url('${esc(x.photos[0])}')` : ''}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
-    <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}</details>`;
+  const block = (name, list, open, gid) => `<details ${open || (q && list.length) ? 'open' : ''}><summary>${esc(name)}<small>${list.length}</small></summary>${
+    list.map(x => {
+      const photoStyle = x.photos?.[0] ? 'background-image:url(\'' + esc(x.photos[0]) + '\')' : '';
+      return `<div class="ex"><div class="thumb" style="${photoStyle}">${x.photos?.[0] ? '' : 'Pas de photo'}</div>
+      <button class="name" data-view="${x.id}">${esc(x.name)}</button><button data-add="${x.id}">Ajouter</button></div>`;
+    }).join('') || '<p class="empty">Aucun exercice dans ce groupe.</p>'}${gid && isAdmin ? `<button class="link danger" data-delgroup="${gid}">Supprimer ce groupe</button>` : ''}</details>`;
   
   $('#catSel').innerHTML = [['all', 'Tous', exercises.length], ...groups.map(g => [g.id, g.name, exercises.filter(x => x.group_id === g.id).length])]
     .map(([id, n, c]) => `<option value="${id}" ${cat === id ? 'selected' : ''}>${esc(n)} (${c})</option>`).join('');
   const shown = groups.filter(g => cat === 'all' || g.id === cat);
-  $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' )).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
+  $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all', g.id)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
      // $('#list').innerHTML = shown.map((g, i) => block(g.name, byGroup(g.id), cat !== 'all' || i === 0)).join('') + (cat === 'all' && none.length ? block('Sans groupe', none) : '');
 
   renderPlan();
@@ -279,6 +286,13 @@ document.addEventListener('click', async e => {
   if (d('rmphoto')) { photos.splice(+d('rmphoto'), 1); drawPhotos(); }
   if (d('load')) { const w = workouts.find(x => x.id === d('load')); plan = [...w.items]; wid = w.user_id === me?.id ? w.id : null; $('#planName').value = w.name; renderPlan(); }
   if (d('delw') && confirm('Supprimer cette seance ?')) { await db.from('workouts').delete().eq('id', d('delw')); load(); }
+  if (d('delgroup')) {
+  const g = groups.find(x => x.id === d('delgroup'));
+  if (confirm('Supprimer le groupe « ' + g.name + ' » ? Ses exercices ne seront pas supprimés : ils iront dans « Sans groupe ».')) {
+    const r = await db.from('groups').delete().eq('id', g.id);
+    if (r.error) alert('Erreur : ' + r.error.message); else { cat = 'all'; load(); }
+  }
+}
 });
 document.addEventListener('input', e => { if (e.target.dataset.detail !== undefined) plan[+e.target.dataset.detail].detail = e.target.value; });
 
@@ -372,8 +386,9 @@ async function auth(kind) {
         if (m.includes('verif') || m.includes('confirm')) {
           showVerify('Courriel non confirmé : entrez le code reçu, ou cliquez sur « Renvoyer le code ».');
         } else {
-          $('#msg').classList.add('err');
-          $('#msg').textContent = r.error.message;
+          $('#msg').textContent = m.includes('invalid email or password')
+          ? 'Courriel ou mot de passe incorrect. Pas encore de compte ? Cliquez sur « Créer un compte ».'
+          : r.error.message;
         }
       } else {
         closeAll();

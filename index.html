@@ -11,7 +11,7 @@
 :root{--bg:#232428;--card:#2f3035;--ink:#f2f2f4;--dark:#17181b;--mute:#a9abb4;--line:#46474f;--gate:#ffd400;--pink:#d81b72;--orange:#ff7a1a;--err:#ff7b7b}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
-h1,h2,h3{font-family:'Barlow Condensed',sans-serif;font-weight:800;margin:0;line-height:1.1}
+h1,h2,h3{font-family:'Arial Narrow',sans-serif;font-weight:800;margin:0;line-height:1.1}
 header{background:var(--dark);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:6px solid;border-image:linear-gradient(90deg,var(--pink),var(--orange),var(--gate)) 1}
 header h1{font-size:1.6rem;display:flex;align-items:center;gap:10px}
 .logo{height:50px;width:auto}
@@ -32,7 +32,7 @@ section{min-width:0;background:var(--card);border:2px solid var(--line);border-r
 .bar input{flex:1;min-width:0}
 input,select,textarea{width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:6px;background:var(--bg)}
 details{border-top:2px solid var(--line);padding:10px 0}
-summary{color:var(--gate);cursor:pointer;font:800 1.3rem 'Barlow Condensed',sans-serif}
+summary{color:var(--gate);cursor:pointer;font:800 1.3rem 'Arial Narrow',sans-serif}
 summary small{font:400 .9rem Barlow;color:var(--mute);margin-left:6px}
 .ex{display:flex;gap:12px;align-items:center;padding:8px 0}
 .thumb{width:64px;height:64px;border-radius:6px;background:var(--bg) center/cover;border:2px solid var(--line);flex:none;display:grid;place-items:center;color:var(--mute);font-size:.7rem;text-align:center}
@@ -61,8 +61,9 @@ label{display:block;font-weight:600;margin:10px 0 4px}
 input[type=checkbox]{width:auto;margin-right:8px}
 #catSel{display:none}.authed #catSel{display:block}
 #plan h2, #library h2{padding-bottom:6px;border-bottom:4px solid var(--pink)}
-#plan h3,#plan label{color:var(--gate);border-left:4px solid var(--pink);padding-left:8px}
-#plan label{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.17em;line-height:1.1}
+#plan h3{color:var(--gate);border-left:4px solid var(--pink);padding-left:8px}
+#plan label{border-left:4px solid var(--dark);padding-left:8px}
+#plan label{font-family:'Arial Narrow',sans-serif;font-weight:800;font-size:1.17em;line-height:1.1}
 @media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
 </style>
 </head>
@@ -75,7 +76,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 
 <main>
   <section id="library">
-    <h2>Exercices</h2>
+    <h2>EXERCICES</h2>
     <div class="bar">
       <input id="search" type="search" placeholder="Rechercher un exercice" aria-label="Rechercher un exercice">
       <button id="btnNew" class="main edit">Nouvel exercice</button>
@@ -86,7 +87,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
   </section>
 
   <section id="plan">
-    <h2>Mon entrainement</h2>
+    <h2>MON ENTRAINEMENT</h2>
     <label for="planName">Nom de la séance</label>
     <input id="planName" placeholder="Ex. : Mardi 19h - manual et sauts">
     <div id="planItems" style="margin-top:12px"></div>

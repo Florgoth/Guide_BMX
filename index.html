@@ -125,7 +125,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
   <h2 id="vName"></h2><p id="vGroup" class="empty"></p>
   <p id="vDesc" class="desc"></p><div id="vPhotos" class="photos"></div>
   <div class="actions">
-    <button id="vDel" class="danger edit">Supprimer</button>
+    <button id="vDel" class="danger">Supprimer</button>
     <button id="vEdit" class="edit">Modifier</button>
     <button id="vAdd" class="main">Ajouter a l'entrainement</button>
     <button data-close>Fermer</button>
@@ -257,6 +257,7 @@ function closeAll() { document.querySelectorAll('dialog').forEach(d => d.close()
 function openView(id) {
   const x = exercises.find(e => e.id === id); current = x;
   $('#vName').textContent = x.name;
+  $('#vDel').hidden = !isAdmin;
   $('#vGroup').textContent = groups.find(g => g.id === x.group_id)?.name || 'Sans groupe';
   $('#vDesc').textContent = x.description || 'Pas de description.';
   $('#vPhotos').innerHTML = (x.photos || []).map(u => `<img src="${esc(u)}" alt="${esc(x.name)}">`).join('');

@@ -79,8 +79,8 @@ input[type=checkbox]{width:auto;margin-right:8px}
 #plan label{border-left:4px solid var(--dark);padding-left:8px}
 #plan label{color:var(--gate);font-family:'Bebas Neue',sans-serif;font-weight:300;font-size:1.17em;line-height:1.1}
 .grip{cursor:grab;touch-action:none;user-select:none;padding:0 8px;font-size:1.3rem;line-height:1;color:var(--mute)}
-.item.drag{opacity:.6;border-color:var(--orange)}
-.item.over{border-color:var(--gate);border-style:dashed}
+.item.drag{position:relative;z-index:5;border-color:var(--orange);box-shadow:0 8px 20px rgba(0,0,0,.5)}
+
 @media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
 @media(max-width:700px){header h1{font-size:1.25rem}}
 @media(max-width:700px){
@@ -257,23 +257,43 @@ function renderPlan() {
   }).join('') || '<p class="empty">Ajoutez des exercices depuis la liste pour bâtir votre séance.</p>';
 }
 
-let dragFrom = null;
+let drag = null;
 $('#planItems').addEventListener('pointerdown', e => {
   const g = e.target.closest('.grip'); if (!g) return;
-  dragFrom = +g.dataset.grip; g.setPointerCapture(e.pointerId);
-  g.closest('.item').classList.add('drag'); e.preventDefault();
+  const els = [...document.querySelectorAll('#planItems .item')];
+  const from = els.indexOf(g.closest('.item')), rects = els.map(x => x.getBoundingClientRect());
+  drag = { els, from, to: from, y0: e.clientY, rects, h: rects[from].height + 8 };
+  g.setPointerCapture(e.pointerId);
+  els.forEach(x => x.style.transition = 'transform .15s');
+  els[from].style.transition = 'none';
+  els[from].classList.add('drag');
+  e.preventDefault();
 });
 $('#planItems').addEventListener('pointermove', e => {
-  if (dragFrom === null) return;
-  document.querySelectorAll('.item.over').forEach(el => el.classList.remove('over'));
-  document.elementFromPoint(e.clientX, e.clientY)?.closest('.item')?.classList.add('over');
+  if (!drag) return;
+  const { els, from, rects, h } = drag, dy = e.clientY - drag.y0;
+  els[from].style.transform = `translateY(${dy}px)`;
+  const mid = rects[from].top + rects[from].height / 2 + dy;
+  let to = from;
+  rects.forEach((q, k) => {
+    const qm = q.top + q.height / 2;
+    if (k > from && mid > qm) to = Math.max(to, k);
+    if (k < from && mid < qm) to = Math.min(to, k);
+  });
+  drag.to = to;
+  els.forEach((x, k) => {
+    if (k === from) return;
+    let s = 0;
+    if (from < to && k > from && k <= to) s = -h;
+    if (from > to && k < from && k >= to) s = h;
+    x.style.transform = s ? `translateY(${s}px)` : '';
+  });
 });
 function endDrag(e) {
-  if (dragFrom === null) return;
-  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.item');
-  const from = dragFrom, to = over ? +over.dataset.i : from;
-  dragFrom = null;
-  if (e.type === 'pointerup' && to !== from) plan.splice(to, 0, plan.splice(from, 1)[0]);
+  if (!drag) return;
+  const { els, from, to } = drag, idx = els.map(x => +x.dataset.i);
+  drag = null;
+  if (e.type === 'pointerup' && to !== from) plan.splice(idx[to], 0, plan.splice(idx[from], 1)[0]);
   renderPlan();
 }
 $('#planItems').addEventListener('pointerup', endDrag);

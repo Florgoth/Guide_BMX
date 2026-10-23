@@ -104,7 +104,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
     </div>
     <select id="catSel" aria-label="Categorie d'exercices" style="margin-bottom:10px"></select>
     <div id="list"></div>
-    <button id="btnGroup" class="link edit">Ajouter un groupe</button>
+    <button id="btnGroup" class="link" hidden>Ajouter un groupe</button>
   </section>
 
   <section id="plan">
@@ -210,6 +210,7 @@ async function load() {
   groups = g.data; exercises = e.data || []; workouts = w.data || []; coaches = p.data || [];
   const a = await db.rpc('is_admin');
     isAdmin = a.data === true;
+    $('#btnGroup').hidden = !isAdmin;
   render();
 }
 

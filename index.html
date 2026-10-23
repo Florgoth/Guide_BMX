@@ -79,7 +79,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 #plan label{border-left:4px solid var(--dark);padding-left:8px}
 #plan label{color:var(--gate);font-family:'Bebas Neue',sans-serif;font-weight:300;font-size:1.17em;line-height:1.1}
 .grip{cursor:grab;touch-action:none;user-select:none;padding:0 8px;font-size:1.3rem;line-height:1;color:var(--mute)}
-.item.drag{position:relative;z-index:5;border-color:var(--orange);box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.item.drag{position:relative;z-index:5;background:rgba(78,79,88,.94);border-color:var(--orange);box-shadow:0 8px 20px rgba(0,0,0,.5)}
 
 @media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
 @media(max-width:700px){header h1{font-size:1.25rem}}
@@ -258,20 +258,11 @@ function renderPlan() {
 }
 
 let drag = null;
-$('#planItems').addEventListener('pointerdown', e => {
-  const g = e.target.closest('.grip'); if (!g) return;
-  const els = [...document.querySelectorAll('#planItems .item')];
-  const from = els.indexOf(g.closest('.item')), rects = els.map(x => x.getBoundingClientRect());
-  drag = { els, from, to: from, y0: e.clientY, rects, h: rects[from].height + 8 };
-  g.setPointerCapture(e.pointerId);
-  els.forEach(x => x.style.transition = 'transform .15s');
-  els[from].style.transition = 'none';
-  els[from].classList.add('drag');
-  e.preventDefault();
-});
-$('#planItems').addEventListener('pointermove', e => {
-  if (!drag) return;
-  const { els, from, rects, h } = drag, dy = e.clientY - drag.y0;
+const boxTop = () => $('#planItems').getBoundingClientRect().top;
+
+function updateDrag() {
+  const { els, from, rects, h } = drag;
+  const dy = drag.cy - drag.y0 + (drag.b0 - boxTop());
   els[from].style.transform = `translateY(${dy}px)`;
   const mid = rects[from].top + rects[from].height / 2 + dy;
   let to = from;
@@ -288,6 +279,33 @@ $('#planItems').addEventListener('pointermove', e => {
     if (from > to && k < from && k >= to) s = h;
     x.style.transform = s ? `translateY(${s}px)` : '';
   });
+}
+
+function autoScroll() {
+  if (!drag) return;
+  const edge = 90, y = drag.cy, max = window.innerHeight;
+  let v = 0;
+  if (y < edge) v = -Math.min(4, Math.max(1, Math.round(3 * (edge - y) / edge)));
+  else if (y > max - edge) v = Math.min(4, Math.max(1, Math.round(3 * (y - (max - edge)) / edge)));
+  if (v) { window.scrollBy(0, v); updateDrag(); }
+  requestAnimationFrame(autoScroll);
+}
+
+$('#planItems').addEventListener('pointerdown', e => {
+  const g = e.target.closest('.grip'); if (!g) return;
+  const els = [...document.querySelectorAll('#planItems .item')];
+  const from = els.indexOf(g.closest('.item')), rects = els.map(x => x.getBoundingClientRect());
+  drag = { els, from, to: from, y0: e.clientY, cy: e.clientY, b0: boxTop(), rects, h: rects[from].height + 8 };
+  g.setPointerCapture(e.pointerId);
+  els.forEach(x => x.style.transition = 'transform .15s');
+  els[from].style.transition = 'none';
+  els[from].classList.add('drag');
+  e.preventDefault();
+  requestAnimationFrame(autoScroll);
+});
+$('#planItems').addEventListener('pointermove', e => {
+  if (!drag) return;
+  drag.cy = e.clientY; updateDrag();
 });
 function endDrag(e) {
   if (!drag) return;

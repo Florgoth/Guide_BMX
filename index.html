@@ -210,6 +210,7 @@ async function load() {
   groups = g.data; exercises = e.data || []; workouts = w.data || []; coaches = p.data || [];
   const a = await db.rpc('is_admin');
     isAdmin = a.data === true;
+    $('#btnNew').hidden = !isAdmin;
     $('#btnGroup').hidden = !isAdmin;
   render();
 }
@@ -266,10 +267,12 @@ function openView(id) {
 }
 
 function openForm(x) {
-  editing = x || null; photos = [...(x?.photos || [])];
+  editing = x || null; photos = isAdmin ? [...(x?.photos || [])] : [];
   $('#fTitle').textContent = x ? 'Modifier l\'exercice' : 'Nouvel exercice';
   $('#fName').value = x?.name || ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
   $('#fGroup').innerHTML = groups.map(g => `<option value="${g.id}" ${g.id === x?.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
+  ['#fName', '#fGroup', '#fDesc'].forEach(s => { $(s).hidden = !isAdmin; $(s).previousElementSibling.hidden = !isAdmin; });
+if (!isAdmin) $('#fTitle').textContent = 'Ajouter des photos à « ' + x.name + ' »';
   drawPhotos(); $('#dForm').showModal();
 }
 function drawPhotos() {
@@ -290,12 +293,20 @@ function shrink(file, max = 900) {
 }
 
 async function saveExercise() {
-  const name = $('#fName').value.trim();
-  if (!name) { $('#fMsg').textContent = 'Le nom est obligatoire.'; return; }
   $('#fMsg').textContent = 'Envoi en cours...';
-  for (const f of $('#fFiles').files) photos.push(await shrink(f));
-  const row = { name, group_id: $('#fGroup').value || null, description: $('#fDesc').value, photos };
-  const r = editing ? await db.from('exercises').update(row).eq('id', editing.id) : await db.from('exercises').insert(row);
+  const added = [];
+  for (const f of $('#fFiles').files) added.push(await shrink(f));
+  let r;
+  if (!isAdmin) {
+    if (!added.length) { $('#fMsg').textContent = 'Choisissez au moins une photo.'; return; }
+    r = await db.rpc('add_exercise_photos', { ex_id: editing.id, new_photos: added });
+  } else {
+    const name = $('#fName').value.trim();
+    if (!name) { $('#fMsg').textContent = 'Le nom est obligatoire.'; return; }
+    photos.push(...added);
+    const row = { name, group_id: $('#fGroup').value || null, description: $('#fDesc').value, photos };
+    r = editing ? await db.from('exercises').update(row).eq('id', editing.id) : await db.from('exercises').insert(row);
+  }
   if (r.error) { $('#fMsg').textContent = 'Erreur : ' + r.error.message; return; }
   closeAll(); load();
 }

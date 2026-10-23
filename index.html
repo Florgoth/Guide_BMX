@@ -271,7 +271,8 @@ function openForm(x) {
   $('#fTitle').textContent = x ? 'Modifier l\'exercice' : 'Nouvel exercice';
   $('#fName').value = x?.name || ''; $('#fDesc').value = x?.description || ''; $('#fFiles').value = ''; $('#fMsg').textContent = '';
   $('#fGroup').innerHTML = groups.map(g => `<option value="${g.id}" ${g.id === x?.group_id ? 'selected' : ''}>${esc(g.name)}</option>`).join('');
-  ['#fName', '#fGroup', '#fDesc'].forEach(s => { $(s).hidden = !isAdmin; $(s).previousElementSibling.hidden = !isAdmin; });
+  document.querySelectorAll('label[for="fName"], label[for="fGroup"], label[for="fDesc"], #fName, #fGroup, #fDesc')
+  .forEach(el => el.style.display = isAdmin ? '' : 'none');
 if (!isAdmin) $('#fTitle').textContent = 'Ajouter des photos à « ' + x.name + ' »';
   drawPhotos(); $('#dForm').showModal();
 }

@@ -78,6 +78,9 @@ input[type=checkbox]{width:auto;margin-right:8px}
 #plan h3{color:var(--gate);border-left:4px solid var(--pink);padding-left:8px}
 #plan label{border-left:4px solid var(--dark);padding-left:8px}
 #plan label{color:var(--gate);font-family:'Bebas Neue',sans-serif;font-weight:300;font-size:1.17em;line-height:1.1}
+.grip{cursor:grab;touch-action:none;user-select:none;padding:0 8px;font-size:1.3rem;line-height:1;color:var(--mute)}
+.item.drag{opacity:.6;border-color:var(--orange)}
+.item.over{border-color:var(--gate);border-style:dashed}
 @media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
 @media(max-width:700px){header h1{font-size:1.25rem}}
 @media(max-width:700px){
@@ -248,11 +251,33 @@ function render() {
 function renderPlan() {
   $('#planItems').innerHTML = plan.map((it, i) => {
     const x = exercises.find(e => e.id === it.id); if (!x) return '';
-    return `<div class="item"><div class="row"><b>${i + 1}. ${esc(x.name)}</b>
+    return `<div class="item" data-i="${i}"><div class="row"><span class="grip" data-grip="${i}" aria-label="Glisser pour déplacer" title="Glisser pour déplacer">⠿</span><b>${i + 1}. ${esc(x.name)}</b>
       <button data-up="${i}" aria-label="Monter">&uarr;</button><button data-down="${i}" aria-label="Descendre">&darr;</button><button data-rm="${i}" aria-label="Retirer">&times;</button></div>
-      <input data-detail="${i}" value="${esc(it.detail)}" placeholder="Series, repetitions, duree" aria-label="Details"></div>`;
-  }).join('') || '<p class="empty">Ajoutez des exercices depuis la liste pour batir votre seance.</p>';
+      <input data-detail="${i}" value="${esc(it.detail)}" placeholder="Séries, répétitions, durée" aria-label="Détails"></div>`;
+  }).join('') || '<p class="empty">Ajoutez des exercices depuis la liste pour bâtir votre séance.</p>';
 }
+
+let dragFrom = null;
+$('#planItems').addEventListener('pointerdown', e => {
+  const g = e.target.closest('.grip'); if (!g) return;
+  dragFrom = +g.dataset.grip; g.setPointerCapture(e.pointerId);
+  g.closest('.item').classList.add('drag'); e.preventDefault();
+});
+$('#planItems').addEventListener('pointermove', e => {
+  if (dragFrom === null) return;
+  document.querySelectorAll('.item.over').forEach(el => el.classList.remove('over'));
+  document.elementFromPoint(e.clientX, e.clientY)?.closest('.item')?.classList.add('over');
+});
+function endDrag(e) {
+  if (dragFrom === null) return;
+  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.item');
+  const from = dragFrom, to = over ? +over.dataset.i : from;
+  dragFrom = null;
+  if (e.type === 'pointerup' && to !== from) plan.splice(to, 0, plan.splice(from, 1)[0]);
+  renderPlan();
+}
+$('#planItems').addEventListener('pointerup', endDrag);
+$('#planItems').addEventListener('pointercancel', endDrag);
 
 function addToPlan(id) { plan.push({ id, detail: '' }); renderPlan(); }
 function closeAll() { document.querySelectorAll('dialog').forEach(d => d.close()); }

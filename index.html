@@ -109,6 +109,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
     <select id="catSel" aria-label="Categorie d'exercices" style="margin-bottom:10px"></select>
     <div id="list"></div>
     <button id="btnGroup" class="link" hidden>Ajouter un groupe</button>
+    <button id="btnOrder" class="link" hidden>Ordonner les groupes</button>
   </section>
 
   <section id="plan">
@@ -124,6 +125,17 @@ input[type=checkbox]{width:auto;margin-right:8px}
     <div class="saved"><h3>Mes séances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Séances partagées avec moi</h3><div id="shared" style="display:block"></div></div>
   </section>
 </main>
+
+<dialog id="dGroups">
+  <h2>Ordre des groupes</h2>
+  <p class="empty">Glissez la poignée ⠿ pour déplacer un groupe, ou utilisez A → Z.</p>
+  <div id="groupOrder"></div>
+  <div class="actions">
+    <button id="gAZ">A → Z</button>
+    <button data-close>Annuler</button>
+    <button id="gSave" class="main">Enregistrer</button>
+  </div>
+</dialog>
 
 <dialog id="dView">
   <h2 id="vName"></h2><p id="vGroup" class="empty"></p>
@@ -196,6 +208,40 @@ let groups = [], exercises = [], workouts = [], plan = [], current = null, editi
 
 let isAdmin = false;
 
+function openOrder() {
+  $('#groupOrder').innerHTML = groups.map(g => `<div class="item" data-id="${g.id}"><div class="row"><span class="grip">⠿</span><b>${esc(g.name)}</b></div></div>`).join('');
+  $('#dGroups').showModal();
+}
+$('#btnOrder').onclick = openOrder;
+
+let gDrag = null;
+$('#groupOrder').addEventListener('pointerdown', e => {
+  const g = e.target.closest('.grip'); if (!g) return;
+  gDrag = g.closest('.item'); gDrag.classList.add('drag');
+  g.setPointerCapture(e.pointerId); e.preventDefault();
+});
+$('#groupOrder').addEventListener('pointermove', e => {
+  if (!gDrag) return;
+  const t = document.elementFromPoint(e.clientX, e.clientY)?.closest('#groupOrder .item');
+  if (!t || t === gDrag) return;
+  const r = t.getBoundingClientRect();
+  t.parentNode.insertBefore(gDrag, e.clientY < r.top + r.height / 2 ? t : t.nextSibling);
+});
+const endG = () => { gDrag?.classList.remove('drag'); gDrag = null; };
+$('#groupOrder').addEventListener('pointerup', endG);
+$('#groupOrder').addEventListener('pointercancel', endG);
+
+$('#gAZ').onclick = () => {
+  const box = $('#groupOrder');
+  [...box.children].sort((a, b) => a.querySelector('b').textContent.localeCompare(b.querySelector('b').textContent, 'fr')).forEach(el => box.appendChild(el));
+};
+$('#gSave').onclick = async () => {
+  const ids = [...$('#groupOrder').children].map(el => el.dataset.id);
+  const rs = await Promise.all(ids.map((id, i) => db.from('groups').update({ position: i + 1 }).eq('id', id)));
+  const bad = rs.find(r => r.error);
+  if (bad) alert('Erreur : ' + bad.error.message); else { closeAll(); load(); }
+};
+
 async function load() {
   const [g, e, w, p] = await Promise.all([
     db.from('groups').select().order('position'),
@@ -216,6 +262,7 @@ async function load() {
     isAdmin = a.data === true;
     $('#btnNew').hidden = !isAdmin;
     $('#btnGroup').hidden = !isAdmin;
+    $('#btnOrder').hidden = !isAdmin;
   render();
 }
 
@@ -251,7 +298,7 @@ function render() {
 function renderPlan() {
   $('#planItems').innerHTML = plan.map((it, i) => {
     const x = exercises.find(e => e.id === it.id); if (!x) return '';
-    return `<div class="item" data-i="${i}"><div class="row"><span class="grip" data-grip="${i}" aria-label="Glisser pour déplacer" title="Glisser pour déplacer">⠿</span><b>${i + 1}. ${esc(x.name)}</b>
+    return `<div class="item" data-i="${i}"><div class="row"><span class="grip" data-grip="${i}" aria-label="Glisser pour déplacer" title="Glisser pour déplacer">⠿</span><b>${i + 1}. <button class="link" data-view="${x.id}" style="font-weight:inherit;padding:0 2px">${esc(x.name)}</button></b>
       <button data-up="${i}" aria-label="Monter">&uarr;</button><button data-down="${i}" aria-label="Descendre">&darr;</button><button data-rm="${i}" aria-label="Retirer">&times;</button></div>
       <input data-detail="${i}" value="${esc(it.detail)}" placeholder="Séries, répétitions, durée" aria-label="Détails"></div>`;
   }).join('') || '<p class="empty">Ajoutez des exercices depuis la liste pour bâtir votre séance.</p>';

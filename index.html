@@ -177,8 +177,10 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28
       <input id="lName" autocomplete="name">
     </div>
     <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
-    <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
-    <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button>
+    <div id="passBox">
+  <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
+  <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button>
+  </div>
   </div>
 
   <p id="msg"></p>
@@ -198,12 +200,12 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28
   <input id="rCode" inputmode="numeric" autocomplete="one-time-code">
   <label for="rPass">Nouveau mot de passe</label>
   <input id="rPass" type="password" autocomplete="new-password">
-  <div class="actions"><button id="rGo" class="main">Changer le mot de passe</button></div>
+  <div class="actions"><button id="rBack">Retour</button><button id="rGo" class="main">Changer le mot de passe</button></div>
 </div>
 
 </div>
   
-  <div class="actions">
+  <div class="actions" id="mainActions">
     <button data-close>Annuler</button>
     <button id="lUp">Créer un compte</button>
     <button id="lIn" class="main">Se connecter</button>
@@ -548,7 +550,7 @@ $('#cSave').onclick = async () => {
   if (r.error) alert('Erreur : ' + r.error.message); else { closeAll(); load(); }
 };
 $('#btnLogin').onclick = () => {
-  $('#resetBox').hidden = true;
+  resetMode(false);
   $('#nameBox').hidden = true;
   $('#msg').textContent = '';
   $('#msg').classList.remove('err');
@@ -641,6 +643,13 @@ $('#lResend').onclick = async () => {
   $('#msg').textContent = r.error ? r.error.message : 'Un nouveau code a été envoyé.';
 };
 
+function resetMode(on) {
+  $('#resetBox').hidden = !on;
+  $('#passBox').hidden = on;
+  $('#mainActions').hidden = on;
+}
+$('#rBack').onclick = () => { resetMode(false); $('#msg').textContent = ''; };
+
 $('#lForgot').onclick = async () => {
   const email = $('#lMail').value.trim();
   $('#msg').classList.remove('err');
@@ -650,7 +659,7 @@ $('#lForgot').onclick = async () => {
     ? await db.auth.emailOtp.sendVerificationOtp({ email, type: 'forget-password' })
     : await neonAuth('/email-otp/send-verification-otp', { email, type: 'forget-password' });
   if (r.error) { $('#msg').classList.add('err'); $('#msg').textContent = r.error.message; return; }
-  $('#resetBox').hidden = false;
+  resetMode(true);
   $('#msg').textContent = 'Si un compte existe pour ce courriel, un code vient d’être envoyé. Entrez-le avec votre nouveau mot de passe.';
 };
 $('#rGo').onclick = async () => {
@@ -661,7 +670,7 @@ $('#rGo').onclick = async () => {
     ? await db.auth.emailOtp.resetPassword({ email, otp, password })
     : await neonAuth('/email-otp/reset-password', { email, otp, password });
   if (r.error) { $('#msg').classList.add('err'); $('#msg').textContent = r.error.message; return; }
-  $('#resetBox').hidden = true; $('#rCode').value = ''; $('#rPass').value = ''; $('#lPass').value = '';
+  resetMode(false); $('#rCode').value = ''; $('#rPass').value = ''; $('#lPass').value = '';
   $('#msg').textContent = '✓ Mot de passe changé. Connectez-vous avec le nouveau.';
 };
 

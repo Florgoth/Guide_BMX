@@ -81,6 +81,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 .grip{cursor:grab;touch-action:none;user-select:none;padding:0 8px;font-size:1.3rem;line-height:1;color:var(--mute)}
 .item.drag{position:relative;z-index:5;background:rgba(78,79,88,.94);border-color:var(--orange);box-shadow:0 8px 20px rgba(0,0,0,.5)}
 footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28px}
+[hidden]{display:none!important}
 
 @media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
 @media(max-width:700px){header h1{font-size:1.25rem}}
@@ -169,7 +170,7 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28
   <div class="actions"><button data-close>Fermer</button><button id="cSave" class="main">Partager</button></div>
 </dialog>
 
-<<dialog id="dLogin">
+<dialog id="dLogin">
   <h2>Connexion coach</h2>
   <div id="loginFields">
     <div id="nameBox" hidden>
@@ -178,33 +179,30 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28
     </div>
     <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
     <div id="passBox">
-  <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
-  <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button>
-  </div>
+      <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
+      <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button>
+    </div>
   </div>
 
   <p id="msg"></p>
 
-  <div id="verifyBox" hidden>    
-  <label for="lCode">Code de vérification reçu par courriel</label>
-  <input id="lCode" inputmode="numeric" autocomplete="one-time-code">
-  <div class="actions">
-    <button id="lResend">Renvoyer le code</button>
-    <button id="lVerify" class="main">Confirmer</button>
+  <div id="verifyBox" hidden>
+    <label for="lCode">Code de vérification reçu par courriel</label>
+    <input id="lCode" inputmode="numeric" autocomplete="one-time-code">
+    <div class="actions">
+      <button id="lResend">Renvoyer le code</button>
+      <button id="lVerify" class="main">Confirmer</button>
+    </div>
   </div>
 
-  <!-- <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button> -->
+  <div id="resetBox" hidden>
+    <label for="rCode">Code reçu par courriel</label>
+    <input id="rCode" inputmode="numeric" autocomplete="one-time-code">
+    <label for="rPass">Nouveau mot de passe</label>
+    <input id="rPass" type="password" autocomplete="new-password">
+    <div class="actions"><button id="rBack">Retour</button><button id="rGo" class="main">Changer le mot de passe</button></div>
+  </div>
 
-<div id="resetBox" hidden>
-  <label for="rCode">Code reçu par courriel</label>
-  <input id="rCode" inputmode="numeric" autocomplete="one-time-code">
-  <label for="rPass">Nouveau mot de passe</label>
-  <input id="rPass" type="password" autocomplete="new-password">
-  <div class="actions"><button id="rBack">Retour</button><button id="rGo" class="main">Changer le mot de passe</button></div>
-</div>
-
-</div>
-  
   <div class="actions" id="mainActions">
     <button data-close>Annuler</button>
     <button id="lUp">Créer un compte</button>
@@ -644,10 +642,12 @@ $('#lResend').onclick = async () => {
 };
 
 function resetMode(on) {
-  $('#resetBox').hidden = !on;
-  $('#passBox').hidden = on;
-  $('#mainActions').hidden = on;
+  $('#msg').after($('#resetBox'));
+  $('#resetBox').style.display = on ? 'block' : 'none';
+  $('#passBox').style.display = on ? 'none' : '';
+  $('#mainActions').style.display = on ? 'none' : '';
 }
+
 $('#rBack').onclick = () => { resetMode(false); $('#msg').textContent = ''; };
 
 $('#lForgot').onclick = async () => {

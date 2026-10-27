@@ -169,15 +169,16 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28
   <div class="actions"><button data-close>Fermer</button><button id="cSave" class="main">Partager</button></div>
 </dialog>
 
-<dialog id="dLogin">
+<<dialog id="dLogin">
   <h2>Connexion coach</h2>
   <div id="loginFields">
     <div id="nameBox" hidden>
-  <label for="lName">Nom du coach (visible par les autres coachs)</label>
-  <input id="lName" autocomplete="name">
-</div>
+      <label for="lName">Nom du coach (visible par les autres coachs)</label>
+      <input id="lName" autocomplete="name">
+    </div>
     <label for="lMail">Courriel</label><input id="lMail" type="email" autocomplete="email">
     <label for="lPass">Mot de passe</label><input id="lPass" type="password" autocomplete="current-password">
+    <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button>
   </div>
 
   <p id="msg"></p>
@@ -190,7 +191,8 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28
     <button id="lVerify" class="main">Confirmer</button>
   </div>
 
-  <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button>
+  <!-- <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button> -->
+
 <div id="resetBox" hidden>
   <label for="rCode">Code reçu par courriel</label>
   <input id="rCode" inputmode="numeric" autocomplete="one-time-code">

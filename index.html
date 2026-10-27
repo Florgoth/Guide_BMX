@@ -80,6 +80,7 @@ input[type=checkbox]{width:auto;margin-right:8px}
 #plan label{color:var(--gate);font-family:'Bebas Neue',sans-serif;font-weight:300;font-size:1.17em;line-height:1.1}
 .grip{cursor:grab;touch-action:none;user-select:none;padding:0 8px;font-size:1.3rem;line-height:1;color:var(--mute)}
 .item.drag{position:relative;z-index:5;background:rgba(78,79,88,.94);border-color:var(--orange);box-shadow:0 8px 20px rgba(0,0,0,.5)}
+footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28px}
 
 @media print{body,section{background:#fff!important;color:#000!important}header,#library,.actions,button,.saved{display:none!important}main{display:block}section{border:0}}
 @media(max-width:700px){header h1{font-size:1.25rem}}
@@ -125,6 +126,8 @@ input[type=checkbox]{width:auto;margin-right:8px}
     <div class="saved"><h3>Mes séances</h3><div id="saved" style="display:block"></div><h3 style="margin-top:14px">Séances partagées avec moi</h3><div id="shared" style="display:block"></div></div>
   </section>
 </main>
+
+<footer id="footerInfo"></footer>
 
 <dialog id="dGroups">
   <h2>Ordre des groupes</h2>
@@ -179,13 +182,23 @@ input[type=checkbox]{width:auto;margin-right:8px}
 
   <p id="msg"></p>
 
-  <div id="verifyBox" hidden>
+  <div id="verifyBox" hidden>    
   <label for="lCode">Code de vérification reçu par courriel</label>
   <input id="lCode" inputmode="numeric" autocomplete="one-time-code">
   <div class="actions">
     <button id="lResend">Renvoyer le code</button>
     <button id="lVerify" class="main">Confirmer</button>
   </div>
+
+  <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button>
+<div id="resetBox" hidden>
+  <label for="rCode">Code reçu par courriel</label>
+  <input id="rCode" inputmode="numeric" autocomplete="one-time-code">
+  <label for="rPass">Nouveau mot de passe</label>
+  <input id="rPass" type="password" autocomplete="new-password">
+  <div class="actions"><button id="rGo" class="main">Changer le mot de passe</button></div>
+</div>
+
 </div>
   
   <div class="actions">
@@ -203,6 +216,9 @@ const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-
 
 const db = createClient({ auth: { adapter: SupabaseAuthAdapter(), url: NEON_AUTH_URL }, dataApi: { url: NEON_DATA_API_URL } });
 const $ = s => document.querySelector(s);
+const CREATOR = 'MartyBo'; //Nom du créateur à afficher dans le pied de page
+const VERSION = '1.30.0-N'; //Version de l'application à afficher dans le pied de page
+$('#footerInfo').textContent = 'Créé par ' + CREATOR + ' | Version ' + VERSION; //Mettre à jour le pied de page avec le nom du créateur et la version de l'application
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let groups = [], exercises = [], workouts = [], plan = [], current = null, editing = null, photos = [], cat = 'all', coaches = [], me = null, wid = null;
 
@@ -530,6 +546,7 @@ $('#cSave').onclick = async () => {
   if (r.error) alert('Erreur : ' + r.error.message); else { closeAll(); load(); }
 };
 $('#btnLogin').onclick = () => {
+  $('#resetBox').hidden = true;
   $('#nameBox').hidden = true;
   $('#msg').textContent = '';
   $('#msg').classList.remove('err');
@@ -620,6 +637,30 @@ $('#lResend').onclick = async () => {
   const r = db.auth.emailOtp?.sendVerificationOtp ? await db.auth.emailOtp.sendVerificationOtp({ email, type: 'email-verification' }) : await neonAuth('/email-otp/send-verification-otp', { email, type: 'email-verification' });
   $('#msg').classList.toggle('err', !!r.error);
   $('#msg').textContent = r.error ? r.error.message : 'Un nouveau code a été envoyé.';
+};
+
+$('#lForgot').onclick = async () => {
+  const email = $('#lMail').value.trim();
+  $('#msg').classList.remove('err');
+  if (!email) { $('#msg').classList.add('err'); $('#msg').textContent = 'Entrez d’abord votre courriel ci-dessus.'; return; }
+  $('#nameBox').hidden = true; $('#verifyBox').hidden = true;
+  const r = db.auth.emailOtp?.sendVerificationOtp
+    ? await db.auth.emailOtp.sendVerificationOtp({ email, type: 'forget-password' })
+    : await neonAuth('/email-otp/send-verification-otp', { email, type: 'forget-password' });
+  if (r.error) { $('#msg').classList.add('err'); $('#msg').textContent = r.error.message; return; }
+  $('#resetBox').hidden = false;
+  $('#msg').textContent = 'Si un compte existe pour ce courriel, un code vient d’être envoyé. Entrez-le avec votre nouveau mot de passe.';
+};
+$('#rGo').onclick = async () => {
+  const email = $('#lMail').value.trim(), otp = $('#rCode').value.trim(), password = $('#rPass').value;
+  if (!otp || !password) return;
+  $('#msg').classList.remove('err'); $('#msg').textContent = 'Changement en cours...';
+  const r = db.auth.emailOtp?.resetPassword
+    ? await db.auth.emailOtp.resetPassword({ email, otp, password })
+    : await neonAuth('/email-otp/reset-password', { email, otp, password });
+  if (r.error) { $('#msg').classList.add('err'); $('#msg').textContent = r.error.message; return; }
+  $('#resetBox').hidden = true; $('#rCode').value = ''; $('#rPass').value = ''; $('#lPass').value = '';
+  $('#msg').textContent = '✓ Mot de passe changé. Connectez-vous avec le nouveau.';
 };
 
 $('#lIn').onclick = () => { $('#nameBox').hidden = true; auth('in'); };

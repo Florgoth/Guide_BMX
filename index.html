@@ -210,6 +210,19 @@ footer{text-align:center;color:var(--mute);font-size:.85rem;padding:20px 16px 28
   </div>
 </dialog>
 
+<dialog id="dReset">
+  <h2>Nouveau mot de passe</h2>
+  <p id="r2Msg" class="empty"></p>
+  <label for="r2Code">Code reçu par courriel</label>
+  <input id="r2Code" inputmode="numeric" autocomplete="one-time-code">
+  <label for="r2Pass">Nouveau mot de passe</label>
+  <input id="r2Pass" type="password" autocomplete="new-password">
+  <div class="actions">
+    <button data-close>Annuler</button>
+    <button id="r2Go" class="main">Changer le mot de passe</button>
+  </div>
+</dialog>
+
 <script type="module">
 import { createClient, SupabaseAuthAdapter } from 'https://esm.sh/@neondatabase/neon-js';
 
@@ -694,6 +707,34 @@ async function refreshSession(s) {
 
 db.auth.onAuthStateChange((_event, s) => setTimeout(() => refreshSession(s), 0));
 refreshSession().catch(() => load());
+
+let resetEmail = '';
+$('#lForgot').onclick = async () => {
+  const email = $('#lMail').value.trim();
+  if (!email) { $('#msg').classList.add('err'); $('#msg').textContent = 'Entrez d’abord votre courriel ci-dessus.'; return; }
+  $('#msg').classList.remove('err'); $('#msg').textContent = 'Envoi du code...';
+  const r = db.auth.emailOtp?.sendVerificationOtp
+    ? await db.auth.emailOtp.sendVerificationOtp({ email, type: 'forget-password' })
+    : await neonAuth('/email-otp/send-verification-otp', { email, type: 'forget-password' });
+  if (r.error) { $('#msg').classList.add('err'); $('#msg').textContent = r.error.message; return; }
+  resetEmail = email;
+  $('#msg').textContent = '';
+  $('#r2Msg').textContent = 'Si un compte existe pour ' + email + ', un code vient d’être envoyé.';
+  $('#r2Code').value = ''; $('#r2Pass').value = '';
+  $('#dLogin').close(); $('#dReset').showModal();
+};
+$('#r2Go').onclick = async () => {
+  const otp = $('#r2Code').value.trim(), password = $('#r2Pass').value;
+  if (!otp || !password) { $('#r2Msg').textContent = 'Entrez le code et le nouveau mot de passe.'; return; }
+  $('#r2Msg').textContent = 'Changement en cours...';
+  const r = db.auth.emailOtp?.resetPassword
+    ? await db.auth.emailOtp.resetPassword({ email: resetEmail, otp, password })
+    : await neonAuth('/email-otp/reset-password', { email: resetEmail, otp, password });
+  if (r.error) { $('#r2Msg').textContent = 'Erreur : ' + r.error.message; return; }
+  $('#dReset').close(); $('#lPass').value = '';
+  $('#msg').classList.remove('err'); $('#msg').textContent = '✓ Mot de passe changé. Connectez-vous avec le nouveau.';
+  $('#dLogin').showModal();
+};
 
 </script>
 </body>

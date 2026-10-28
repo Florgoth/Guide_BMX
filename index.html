@@ -69,7 +69,7 @@ label{display:block;font-weight:600;margin:10px 0 4px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px}
 .desc{white-space:pre-wrap}
 .edit{display:none}.authed .edit{display:inline-block}.authed .anon{display:none}
-#msg{color:var(--gate);min-height:1.4em;font-weight:600;margin-top:10px}
+#msg{color:var(--title);min-height:1.4em;font-weight:600;margin-top:10px}
 #msg.err{color:var(--err)}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}.chips button{white-space:nowrap;padding:4px 12px;border-radius:99px}.chips button.on{background:var(--gate);border-color:var(--gate);color:var(--dark)}
 input[type=checkbox]{width:auto;margin-right:8px}
@@ -197,18 +197,15 @@ footer .hl{color:var(--title)}
     </div>
   </div>
 
-  <button id="lForgot" class="link" type="button">Mot de passe oublié ?</button>
 <div id="resetBox" hidden>
   <label for="rCode">Code reçu par courriel</label>
   <input id="rCode" inputmode="numeric" autocomplete="one-time-code">
   <label for="rPass">Nouveau mot de passe</label>
   <input id="rPass" type="password" autocomplete="new-password">
-  <div class="actions"><button id="rGo" class="main">Changer le mot de passe</button></div>
-</div>
-
+    <div class="actions"><button id="rBack">Retour</button><button id="rGo" class="main">Changer le mot de passe</button></div>
 </div>
   
-  <div class="actions">
+  <div class="actions" id="mainActions">
     <button data-close>Annuler</button>
     <button id="lUp">Créer un compte</button>
     <button id="lIn" class="main">Se connecter</button>
@@ -237,7 +234,7 @@ const NEON_DATA_API_URL = 'https://ep-patient-haze-b4h5fzuq.apirest.c-6.us-east-
 const db = createClient({ auth: { adapter: SupabaseAuthAdapter(), url: NEON_AUTH_URL }, dataApi: { url: NEON_DATA_API_URL } });
 const $ = s => document.querySelector(s);
 const CREATOR = 'MartyBo'; //Nom du créateur à afficher dans le pied de page
-const VERSION = '1.30.0-N'; //Version de l'application à afficher dans le pied de page
+const VERSION = '1.30.1'; //Version de l'application à afficher dans le pied de page
 $('#footerInfo').innerHTML = 'Créé par <span class="hl">' + CREATOR + '</span> <span class="sep">|</span> Version <span class="hl">' + VERSION + '</span>' //Mettre à jour le pied de page avec le nom du créateur et la version de l'application
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let groups = [], exercises = [], workouts = [], plan = [], current = null, editing = null, photos = [], cat = 'all', coaches = [], me = null, wid = null;
@@ -740,7 +737,6 @@ $('#r2Go').onclick = async () => {
   $('#msg').classList.remove('err'); $('#msg').textContent = '✓ Mot de passe changé. Connectez-vous avec le nouveau.';
   $('#dLogin').showModal();
 };
-
 
 </script>
 </body>
